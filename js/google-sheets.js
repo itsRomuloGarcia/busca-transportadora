@@ -1,15 +1,17 @@
-// Configuração para acessar Google Sheets
+// Configuração para acessar Google Sheets - CORRIGIDO PARA DEPLOY
 class GoogleSheetsAPI {
   constructor() {
-    // URL pública da planilha fornecida
-    this.sheetUrl =
-      "https://docs.google.com/spreadsheets/d/14Fv2BP09fwtErevfOlnuSdRPA4HwSaYxNcpvE6FoZUY/gviz/tq?tqx=out:csv";
+    // URL pública da planilha fornecida - COM CORS PROXY
+    this.sheetUrl = "https://docs.google.com/spreadsheets/d/14Fv2BP09fwtErevfOlnuSdRPA4HwSaYxNcpvE6FoZUY/gviz/tq?tqx=out:csv";
     this.data = null;
     this.cacheKey = "transportadoras_cache";
     this.cacheTimeout = 5 * 60 * 1000; // 5 minutos
+    
+    // Proxy para evitar CORS em produção
+    this.corsProxy = "https://cors-anywhere.herokuapp.com/";
   }
 
-  // Carrega dados da planilha
+  // Carrega dados da planilha - COM FALLBACK ROBUSTO
   async loadData() {
     console.log("📥 Iniciando carregamento de dados...");
 
@@ -23,12 +25,20 @@ class GoogleSheetsAPI {
 
     try {
       console.log("🌐 Buscando dados da planilha...");
-      const response = await fetch(this.sheetUrl);
+      
+      // Tenta primeiro sem proxy (para localhost)
+      let response;
+      try {
+        response = await fetch(this.sheetUrl);
+        if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+      } catch (firstError) {
+        console.log("🔄 Tentando com CORS proxy...");
+        // Se falhar, tenta com proxy CORS
+        response = await fetch(this.corsProxy + this.sheetUrl);
+      }
 
       if (!response.ok) {
-        throw new Error(
-          `Erro HTTP: ${response.status} - ${response.statusText}`
-        );
+        throw new Error(`Erro HTTP: ${response.status} - ${response.statusText}`);
       }
 
       const csvText = await response.text();
@@ -43,9 +53,7 @@ class GoogleSheetsAPI {
 
       // Validação se há dados válidos
       if (!this.data || this.data.length === 0) {
-        console.warn(
-          "⚠️ Nenhum dado válido encontrado, usando dados de exemplo"
-        );
+        console.warn("⚠️ Nenhum dado válido encontrado, usando dados de exemplo");
         this.data = this.getSampleData();
       } else {
         console.log(`✅ ${this.data.length} registros carregados com sucesso`);
@@ -56,7 +64,7 @@ class GoogleSheetsAPI {
       return this.data;
     } catch (error) {
       console.error("❌ Erro ao carregar dados:", error);
-
+      
       // Retorna dados de exemplo em caso de erro
       console.log("🔄 Usando dados de exemplo devido ao erro");
       this.data = this.getSampleData();
@@ -78,7 +86,6 @@ class GoogleSheetsAPI {
 
       // Remove aspas e caracteres especiais do CSV do Google Sheets
       const cleanLine = (line) => {
-        // Remove aspas externas e divide por vírgula
         return line
           .replace(/^"|"$/g, "")
           .split('","')
@@ -121,9 +128,7 @@ class GoogleSheetsAPI {
         }
       }
 
-      console.log(
-        `✅ ${data.length} registros válidos, ${skippedLines} linhas ignoradas`
-      );
+      console.log(`✅ ${data.length} registros válidos, ${skippedLines} linhas ignoradas`);
       return data;
     } catch (error) {
       console.error("❌ Erro ao fazer parse do CSV:", error);
@@ -240,6 +245,20 @@ class GoogleSheetsAPI {
         transportadora: "MOVVI",
         modal: "RODOVIÁRIO",
       },
+      {
+        cidade: "GOVERNARDOR ARCHER",
+        uf: "MA", 
+        dias_uteis: "8",
+        transportadora: "JAMEF",
+        modal: "RODOVIÁRIO",
+      },
+      {
+        cidade: "FORTALEZA",
+        uf: "CE",
+        dias_uteis: "7",
+        transportadora: "AZUL CARGO",
+        modal: "AÉREO",
+      }
     ];
 
     console.log(`✅ ${sampleData.length} registros de exemplo carregados`);
