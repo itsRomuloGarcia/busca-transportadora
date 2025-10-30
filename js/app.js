@@ -1,4 +1,4 @@
-// Aplicação principal - ATUALIZADA PARA DEPLOY
+// Aplicação principal - COM DEBUG MELHORADO
 class TransportadoraApp {
   constructor() {
     this.sheetsAPI = new GoogleSheetsAPI();
@@ -46,6 +46,9 @@ class TransportadoraApp {
       if (this.allData && this.allData.length > 0) {
         this.filtersManager.init(this.allData);
         console.log("✅ Filtros inicializados com sucesso");
+        
+        // DEBUG: Mostrar todas as cidades disponíveis
+        this.debugShowAvailableCities();
       } else {
         console.error("❌ Não foi possível carregar dados para os filtros");
       }
@@ -57,12 +60,44 @@ class TransportadoraApp {
     }
   }
 
+  // ✅ NOVO MÉTODO: Mostra cidades disponíveis para debug
+  debugShowAvailableCities() {
+    if (!this.allData || this.allData.length === 0) return;
+    
+    const cities = this.extractUniqueCities(this.allData);
+    console.log("🏙️ TODAS as cidades disponíveis para busca:", 
+      cities.map(c => `${c.cidade}, ${c.uf}`).sort()
+    );
+    
+    // Também mostra no HTML para facilitar
+    const debugInfo = document.createElement('div');
+    debugInfo.style.cssText = `
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 12px;
+      z-index: 10000;
+      max-width: 300px;
+      max-height: 200px;
+      overflow-y: auto;
+    `;
+    debugInfo.innerHTML = `
+      <strong>🏙️ Cidades Disponíveis:</strong><br>
+      ${cities.slice(0, 10).map(c => `${c.cidade}, ${c.uf}`).join('<br>')}
+      ${cities.length > 10 ? `<br>... e mais ${cities.length - 10} cidades` : ''}
+    `;
+    document.body.appendChild(debugInfo);
+  }
+
   async debugLoadData() {
     console.log("🐛 DEBUG: Iniciando debug do carregamento...");
     console.log("📍 Ambiente:", window.location.hostname.includes('vercel') ? 'Vercel' : 'Local');
     
     try {
-      // Testa carregamento direto
       const testUrl = "https://docs.google.com/spreadsheets/d/14Fv2BP09fwtErevfOlnuSdRPA4HwSaYxNcpvE6FoZUY/gviz/tq?tqx=out:csv";
       
       console.log("🔍 Testando fetch direto...");
@@ -73,20 +108,7 @@ class TransportadoraApp {
         const text = await response.text();
         console.log("✅ Fetch bem-sucedido. Primeiros 500 chars:", text.substring(0, 500));
       } else {
-        console.log("❌ Fetch falhou. Tentando com CORS proxy...");
-        try {
-          const proxyResponse = await fetch("https://cors-anywhere.herokuapp.com/" + testUrl);
-          console.log("📊 Status do proxy:", proxyResponse.status);
-          
-          if (proxyResponse.ok) {
-            const proxyText = await proxyResponse.text();
-            console.log("✅ Proxy bem-sucedido. Primeiros 500 chars:", proxyText.substring(0, 500));
-          } else {
-            console.log("❌ Proxy também falhou. Usando dados de exemplo.");
-          }
-        } catch (proxyError) {
-          console.log("❌ Erro no proxy:", proxyError);
-        }
+        console.log("❌ Fetch falhou.");
       }
     } catch (error) {
       console.error("❌ Erro no debug:", error);
@@ -99,17 +121,13 @@ class TransportadoraApp {
     try {
       console.log("🚀 Iniciando carregamento no app...");
       this.allData = await this.sheetsAPI.loadData();
-      console.log("✅ Dados recebidos no app:", this.allData);
+      console.log("✅ Dados recebidos no app. Total:", this.allData.length);
 
       if (!this.allData || this.allData.length === 0) {
         console.warn("⚠️ Nenhum dado encontrado na planilha");
         this.showError("Nenhum dado encontrado na planilha.");
       } else {
         console.log(`🎉 ${this.allData.length} registros carregados com sucesso!`);
-        
-        // DEBUG: Mostrar algumas cidades disponíveis
-        const uniqueCities = this.extractUniqueCities(this.allData);
-        console.log("🏙️ Cidades disponíveis:", uniqueCities.slice(0, 5));
       }
 
       this.showLoading(false);
@@ -160,6 +178,8 @@ class TransportadoraApp {
     }
 
     console.log(`🔍 Iniciando busca por: "${cidadeInput}"`);
+    console.log(`📊 Base de dados: ${this.allData.length} registros disponíveis`);
+    
     this.showLoading(true, "Buscando transportadoras...");
 
     setTimeout(() => {
@@ -253,6 +273,25 @@ class TransportadoraApp {
 
     if (!data || data.length === 0) {
       console.log("📭 Nenhum resultado encontrado para a busca");
+      
+      // ✅ MENSAGEM MAIS INFORMATIVA
+      const availableCities = this.extractUniqueCities(this.allData);
+      const suggestedCities = availableCities
+        .filter(city => 
+          city.cidade.toLowerCase().includes(cidadeInput.toLowerCase()) ||
+          this.filtersManager.checkSimilarity(city.cidade, cidadeInput)
+        )
+        .slice(0, 5);
+      
+      let suggestionHTML = '';
+      if (suggestedCities.length > 0) {
+        suggestionHTML = `
+          <div style="margin-top: 1rem; font-size: 0.9rem; color: var(--text-secondary);">
+            <p><strong>Sugestões:</strong> ${suggestedCities.map(c => `${c.cidade}, ${c.uf}`).join(' • ')}</p>
+          </div>
+        `;
+      }
+      
       container.innerHTML = `
         <div class="no-results">
           <div class="no-results-icon">
@@ -262,8 +301,9 @@ class TransportadoraApp {
           </div>
           <h3>Nenhuma transportadora encontrada</h3>
           <p>Tente ajustar os filtros ou verificar a ortografia da cidade</p>
-          <div style="margin-top: 1rem; font-size: 0.9rem; color: var(--text-secondary);">
-            <p><strong>Dica:</strong> Tente buscar por "São Paulo" ou "Rio de Janeiro"</p>
+          ${suggestionHTML}
+          <div style="margin-top: 1rem; font-size: 0.8rem; color: var(--text-tertiary);">
+            <p><strong>Dica:</strong> Tente buscar por "São Paulo", "Rio de Janeiro" ou "Curitiba"</p>
           </div>
         </div>
       `;
