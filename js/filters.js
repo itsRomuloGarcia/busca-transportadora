@@ -1,4 +1,4 @@
-// Gerenciamento de filtros simplificado - BUSCA FLEXÍVEL CORRIGIDA
+// Gerenciamento de filtros simplificado
 class FiltersManager {
   constructor() {
     this.filters = {
@@ -16,7 +16,6 @@ class FiltersManager {
 
   // Inicializa os filtros
   init(data) {
-    console.log("🔧 Inicializando filtros com dados:", data?.length || 0);
     this.extractAvailableFilters(data);
     this.populateFilterOptions();
     this.setupEventListeners();
@@ -26,13 +25,9 @@ class FiltersManager {
   extractAvailableFilters(data) {
     if (!data || !Array.isArray(data)) {
       console.warn("Dados inválidos para extrair filtros");
-      // Usa valores padrão se não houver dados
-      this.availableFilters.modais = new Set(["RODOVIÁRIO", "AÉREO"]);
-      this.availableFilters.transportadoras = new Set(["JAMEF", "MOVVI", "AZUL CARGO"]);
       return;
     }
 
-    console.log("📊 Extraindo filtros disponíveis...");
     data.forEach((item) => {
       if (item && typeof item === "object") {
         if (item.modal && typeof item.modal === "string")
@@ -41,26 +36,17 @@ class FiltersManager {
           this.availableFilters.transportadoras.add(item.transportadora);
       }
     });
-
-    console.log("✅ Filtros extraídos:", {
-      modais: Array.from(this.availableFilters.modais),
-      transportadoras: Array.from(this.availableFilters.transportadoras)
-    });
   }
 
   // Preenche as opções dos selects
   populateFilterOptions() {
     this.populateSelect("modalFilter", this.availableFilters.modais);
     this.populateSelect("carrierFilter", this.availableFilters.transportadoras);
-    console.log("✅ Opções de filtro preenchidas");
   }
 
   populateSelect(selectId, valuesSet) {
     const select = document.getElementById(selectId);
-    if (!select) {
-      console.warn(`❌ Select não encontrado: ${selectId}`);
-      return;
-    }
+    if (!select) return;
 
     // Limpa opções existentes (exceto a primeira)
     while (select.children.length > 1) {
@@ -75,8 +61,6 @@ class FiltersManager {
       option.textContent = value;
       select.appendChild(option);
     });
-
-    console.log(`✅ ${selectId} preenchido com ${options.length} opções`);
   }
 
   // Configura os event listeners
@@ -85,22 +69,16 @@ class FiltersManager {
     const applyBtn = document.getElementById("applyFilters");
     if (applyBtn) {
       applyBtn.addEventListener("click", () => {
-        console.log("🔄 Aplicando filtros manualmente");
         this.applyFilters();
       });
-    } else {
-      console.warn("❌ Botão applyFilters não encontrado");
     }
 
     // Limpar filtros
     const clearBtn = document.getElementById("clearFilters");
     if (clearBtn) {
       clearBtn.addEventListener("click", () => {
-        console.log("🗑️ Limpando filtros");
         this.clearFilters();
       });
-    } else {
-      console.warn("❌ Botão clearFilters não encontrado");
     }
 
     // Busca por Enter
@@ -108,13 +86,10 @@ class FiltersManager {
     if (citySearch) {
       citySearch.addEventListener("keypress", (e) => {
         if (e.key === "Enter") {
-          console.log("↵ Enter pressionado na busca");
           const searchBtn = document.getElementById("searchBtn");
           if (searchBtn) searchBtn.click();
         }
       });
-    } else {
-      console.warn("❌ Input citySearch não encontrado");
     }
 
     // Aplicar filtros automaticamente quando selects mudarem
@@ -123,24 +98,21 @@ class FiltersManager {
 
     if (modalFilter) {
       modalFilter.addEventListener("change", () => {
-        console.log("📦 Modal alterado:", modalFilter.value);
         this.applyFilters();
       });
     }
 
     if (carrierFilter) {
       carrierFilter.addEventListener("change", () => {
-        console.log("🚚 Transportadora alterada:", carrierFilter.value);
         this.applyFilters();
       });
     }
-
-    console.log("✅ Event listeners dos filtros configurados");
   }
 
   // Aplica os filtros
   applyFilters() {
-    const cidadeInput = document.getElementById("citySearch")?.value.trim() || "";
+    const cidadeInput =
+      document.getElementById("citySearch")?.value.trim() || "";
 
     // Extrai cidade e UF do input (formato: "CIDADE, UF")
     let cidade = "";
@@ -157,9 +129,8 @@ class FiltersManager {
     this.filters.cidade = cidade;
     this.filters.uf = uf;
     this.filters.modal = document.getElementById("modalFilter")?.value || "";
-    this.filters.transportadora = document.getElementById("carrierFilter")?.value || "";
-
-    console.log("🎯 Filtros aplicados:", this.filters);
+    this.filters.transportadora =
+      document.getElementById("carrierFilter")?.value || "";
 
     // Dispara evento customizado para notificar a aplicação
     window.dispatchEvent(
@@ -184,8 +155,6 @@ class FiltersManager {
     this.filters.modal = "";
     this.filters.transportadora = "";
 
-    console.log("🗑️ Filtros limpos");
-
     window.dispatchEvent(
       new CustomEvent("filtersChanged", {
         detail: { filters: this.filters },
@@ -193,16 +162,14 @@ class FiltersManager {
     );
   }
 
-  // ✅ MÉTODO CORRIGIDO - BUSCA FLEXÍVEL
+  // No método filterData, substitua a parte de matching da cidade:
   filterData(data, cidadeInput = "") {
     if (!data || !Array.isArray(data)) {
       console.warn("Dados inválidos para filtragem");
       return [];
     }
 
-    console.log(`🔍 Filtrando ${data.length} registros com: "${cidadeInput}"`);
-
-    // Processa o input da cidade para busca flexível
+    // Processa o input da cidade para busca exata
     let cidade = "";
     let uf = "";
 
@@ -214,26 +181,10 @@ class FiltersManager {
       cidade = cidadeInput;
     }
 
-    this.filters.cidade = cidade.toUpperCase();
-    this.filters.uf = uf.toUpperCase();
+    this.filters.cidade = cidade.toUpperCase(); // Busca exata em maiúsculas
+    this.filters.uf = uf;
 
-    console.log(`🎯 Critérios de busca: cidade="${this.filters.cidade}", uf="${this.filters.uf}", modal="${this.filters.modal}", transportadora="${this.filters.transportadora}"`);
-
-    // ✅ FUNÇÃO DE NORMALIZAÇÃO MELHORADA
-    const normalizeString = (str) => {
-      if (!str) return "";
-      return str
-        .toUpperCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "") // Remove acentos
-        .replace(/-/g, " ") // Substitui hífens por espaços
-        .replace(/[^A-Z0-9\s]/g, "") // Remove caracteres especiais
-        .trim();
-    };
-
-    const normalizedFilterCidade = normalizeString(this.filters.cidade);
-
-    const filteredData = data.filter((item) => {
+    return data.filter((item) => {
       if (!item || typeof item !== "object") {
         return false;
       }
@@ -243,63 +194,22 @@ class FiltersManager {
       const itemModal = item.modal || "";
       const itemTransportadora = item.transportadora || "";
 
-      // ✅ BUSCA POR CIDADE - MUITO MAIS FLEXÍVEL
-      let matchesCidade = true;
-      if (this.filters.cidade) {
-        const normalizedItemCidade = normalizeString(itemCidade);
-        
-        // Várias estratégias de matching
-        matchesCidade = 
-          normalizedItemCidade.includes(normalizedFilterCidade) || // Contains
-          normalizedFilterCidade.includes(normalizedItemCidade) || // Reverse contains
-          normalizedItemCidade.startsWith(normalizedFilterCidade) || // Starts with
-          this.checkSimilarity(normalizedItemCidade, normalizedFilterCidade); // Similaridade
-      }
+      // BUSCA EXATA - compara nomes normalizados
+      const matchesCidade =
+        !this.filters.cidade ||
+        itemCidade.toUpperCase() === this.filters.cidade;
 
-      // Busca por UF (exata)
-      const matchesUf = !this.filters.uf || 
-        itemUf.toUpperCase() === this.filters.uf;
-
-      // Busca por modal (exata)
-      const matchesModal = !this.filters.modal || 
-        itemModal === this.filters.modal;
-
-      // Busca por transportadora (exata)
-      const matchesTransportadora = !this.filters.transportadora || 
+      const matchesUf = !this.filters.uf || itemUf === this.filters.uf;
+      const matchesModal =
+        !this.filters.modal || itemModal === this.filters.modal;
+      const matchesTransportadora =
+        !this.filters.transportadora ||
         itemTransportadora === this.filters.transportadora;
 
-      const matches = matchesCidade && matchesUf && matchesModal && matchesTransportadora;
-      
-      if (matches && this.filters.cidade) {
-        console.log(`✅ ENCONTRADO: "${itemCidade}, ${itemUf}" → "${itemTransportadora}" (${itemModal})`);
-      }
-
-      return matches;
+      return (
+        matchesCidade && matchesUf && matchesModal && matchesTransportadora
+      );
     });
-
-    console.log(`📊 Filtragem concluída: ${filteredData.length} de ${data.length} registros`);
-    
-    // DEBUG: Mostrar o que foi encontrado
-    if (filteredData.length === 0 && this.filters.cidade) {
-      console.log("🔍 DEBUG - Cidades disponíveis:", data.map(item => `${item.cidade}, ${item.uf}`).slice(0, 10));
-    }
-    
-    return filteredData;
-  }
-
-  // ✅ NOVO MÉTODO: Verifica similaridade entre strings
-  checkSimilarity(str1, str2) {
-    if (!str1 || !str2) return false;
-    
-    // Remove palavras comuns
-    const commonWords = ['DA', 'DE', 'DO', 'DOS', 'DAS', 'E'];
-    const words1 = str1.split(' ').filter(word => !commonWords.includes(word));
-    const words2 = str2.split(' ').filter(word => !commonWords.includes(word));
-    
-    // Verifica se alguma palavra de str2 está em str1
-    return words2.some(word2 => 
-      words1.some(word1 => word1.includes(word2) || word2.includes(word1))
-    );
   }
 
   // Retorna os filtros atuais
