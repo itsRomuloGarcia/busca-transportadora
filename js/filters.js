@@ -1,4 +1,4 @@
-// Gerenciamento de filtros simplificado - ATUALIZADO PARA DEPLOY
+// Gerenciamento de filtros simplificado - BUSCA FLEXÍVEL CORRIGIDA
 class FiltersManager {
   constructor() {
     this.filters = {
@@ -193,14 +193,14 @@ class FiltersManager {
     );
   }
 
-  // Filtra os dados com busca flexível
+  // ✅ MÉTODO CORRIGIDO - BUSCA FLEXÍVEL
   filterData(data, cidadeInput = "") {
     if (!data || !Array.isArray(data)) {
       console.warn("Dados inválidos para filtragem");
       return [];
     }
 
-    console.log(`🔍 Filtrando ${data.length} registros...`);
+    console.log(`🔍 Filtrando ${data.length} registros com: "${cidadeInput}"`);
 
     // Processa o input da cidade para busca flexível
     let cidade = "";
@@ -219,6 +219,20 @@ class FiltersManager {
 
     console.log(`🎯 Critérios de busca: cidade="${this.filters.cidade}", uf="${this.filters.uf}", modal="${this.filters.modal}", transportadora="${this.filters.transportadora}"`);
 
+    // ✅ FUNÇÃO DE NORMALIZAÇÃO MELHORADA
+    const normalizeString = (str) => {
+      if (!str) return "";
+      return str
+        .toUpperCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "") // Remove acentos
+        .replace(/-/g, " ") // Substitui hífens por espaços
+        .replace(/[^A-Z0-9\s]/g, "") // Remove caracteres especiais
+        .trim();
+    };
+
+    const normalizedFilterCidade = normalizeString(this.filters.cidade);
+
     const filteredData = data.filter((item) => {
       if (!item || typeof item !== "object") {
         return false;
@@ -229,24 +243,18 @@ class FiltersManager {
       const itemModal = item.modal || "";
       const itemTransportadora = item.transportadora || "";
 
-      // ✅ BUSCA FLEXÍVEL - normaliza strings para comparação
-      const normalizeString = (str) => {
-        return str
-          .toUpperCase()
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "") // Remove acentos
-          .replace(/-/g, " ") // Substitui hífens por espaços
-          .trim();
-      };
-
-      const normalizedItemCidade = normalizeString(itemCidade);
-      const normalizedFilterCidade = normalizeString(this.filters.cidade);
-
-      // Busca por cidade (flexível - includes)
-      const matchesCidade =
-        !this.filters.cidade ||
-        normalizedItemCidade.includes(normalizedFilterCidade) ||
-        normalizedFilterCidade.includes(normalizedItemCidade);
+      // ✅ BUSCA POR CIDADE - MUITO MAIS FLEXÍVEL
+      let matchesCidade = true;
+      if (this.filters.cidade) {
+        const normalizedItemCidade = normalizeString(itemCidade);
+        
+        // Várias estratégias de matching
+        matchesCidade = 
+          normalizedItemCidade.includes(normalizedFilterCidade) || // Contains
+          normalizedFilterCidade.includes(normalizedItemCidade) || // Reverse contains
+          normalizedItemCidade.startsWith(normalizedFilterCidade) || // Starts with
+          this.checkSimilarity(normalizedItemCidade, normalizedFilterCidade); // Similaridade
+      }
 
       // Busca por UF (exata)
       const matchesUf = !this.filters.uf || 
@@ -263,14 +271,35 @@ class FiltersManager {
       const matches = matchesCidade && matchesUf && matchesModal && matchesTransportadora;
       
       if (matches && this.filters.cidade) {
-        console.log(`✅ Item encontrado: ${itemCidade}, ${itemUf} - ${itemTransportadora} (${itemModal})`);
+        console.log(`✅ ENCONTRADO: "${itemCidade}, ${itemUf}" → "${itemTransportadora}" (${itemModal})`);
       }
 
       return matches;
     });
 
     console.log(`📊 Filtragem concluída: ${filteredData.length} de ${data.length} registros`);
+    
+    // DEBUG: Mostrar o que foi encontrado
+    if (filteredData.length === 0 && this.filters.cidade) {
+      console.log("🔍 DEBUG - Cidades disponíveis:", data.map(item => `${item.cidade}, ${item.uf}`).slice(0, 10));
+    }
+    
     return filteredData;
+  }
+
+  // ✅ NOVO MÉTODO: Verifica similaridade entre strings
+  checkSimilarity(str1, str2) {
+    if (!str1 || !str2) return false;
+    
+    // Remove palavras comuns
+    const commonWords = ['DA', 'DE', 'DO', 'DOS', 'DAS', 'E'];
+    const words1 = str1.split(' ').filter(word => !commonWords.includes(word));
+    const words2 = str2.split(' ').filter(word => !commonWords.includes(word));
+    
+    // Verifica se alguma palavra de str2 está em str1
+    return words2.some(word2 => 
+      words1.some(word1 => word1.includes(word2) || word2.includes(word1))
+    );
   }
 
   // Retorna os filtros atuais
