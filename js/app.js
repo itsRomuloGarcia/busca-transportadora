@@ -1,4 +1,4 @@
-// Aplicação principal - ATUALIZADA PARA NOVO LAYOUT
+// Aplicação principal - ATUALIZADA PARA DEPLOY
 class TransportadoraApp {
   constructor() {
     this.sheetsAPI = new GoogleSheetsAPI();
@@ -14,10 +14,7 @@ class TransportadoraApp {
   async initializeDistanceCalculator() {
     return new Promise((resolve) => {
       const checkDC = () => {
-        if (
-          window.distanceCalculator &&
-          window.distanceCalculator.getDistanceToCity
-        ) {
+        if (window.distanceCalculator && window.distanceCalculator.getDistanceToCity) {
           console.log("✅ DistanceCalculator pronto");
           resolve();
         } else {
@@ -31,18 +28,19 @@ class TransportadoraApp {
 
   setupPerformance() {
     if (window.PerformanceManager) {
-      PerformanceManager.measurePerformance(
-        "Inicialização da aplicação",
-        () => {
-          console.log("📊 Performance monitor ativado");
-        }
-      );
+      PerformanceManager.measurePerformance("Inicialização da aplicação", () => {
+        console.log("📊 Performance monitor ativado");
+      });
     }
   }
 
   async init() {
     try {
       await this.initializeDistanceCalculator();
+      
+      // DEBUG: Testar carregamento
+      await this.debugLoadData();
+      
       await this.loadData();
 
       if (this.allData && this.allData.length > 0) {
@@ -59,6 +57,42 @@ class TransportadoraApp {
     }
   }
 
+  async debugLoadData() {
+    console.log("🐛 DEBUG: Iniciando debug do carregamento...");
+    console.log("📍 Ambiente:", window.location.hostname.includes('vercel') ? 'Vercel' : 'Local');
+    
+    try {
+      // Testa carregamento direto
+      const testUrl = "https://docs.google.com/spreadsheets/d/14Fv2BP09fwtErevfOlnuSdRPA4HwSaYxNcpvE6FoZUY/gviz/tq?tqx=out:csv";
+      
+      console.log("🔍 Testando fetch direto...");
+      const response = await fetch(testUrl);
+      console.log("📊 Status da resposta:", response.status, response.statusText);
+      
+      if (response.ok) {
+        const text = await response.text();
+        console.log("✅ Fetch bem-sucedido. Primeiros 500 chars:", text.substring(0, 500));
+      } else {
+        console.log("❌ Fetch falhou. Tentando com CORS proxy...");
+        try {
+          const proxyResponse = await fetch("https://cors-anywhere.herokuapp.com/" + testUrl);
+          console.log("📊 Status do proxy:", proxyResponse.status);
+          
+          if (proxyResponse.ok) {
+            const proxyText = await proxyResponse.text();
+            console.log("✅ Proxy bem-sucedido. Primeiros 500 chars:", proxyText.substring(0, 500));
+          } else {
+            console.log("❌ Proxy também falhou. Usando dados de exemplo.");
+          }
+        } catch (proxyError) {
+          console.log("❌ Erro no proxy:", proxyError);
+        }
+      }
+    } catch (error) {
+      console.error("❌ Erro no debug:", error);
+    }
+  }
+
   async loadData() {
     this.showLoading(true);
 
@@ -71,18 +105,18 @@ class TransportadoraApp {
         console.warn("⚠️ Nenhum dado encontrado na planilha");
         this.showError("Nenhum dado encontrado na planilha.");
       } else {
-        console.log(
-          `🎉 ${this.allData.length} registros carregados com sucesso!`
-        );
+        console.log(`🎉 ${this.allData.length} registros carregados com sucesso!`);
+        
+        // DEBUG: Mostrar algumas cidades disponíveis
+        const uniqueCities = this.extractUniqueCities(this.allData);
+        console.log("🏙️ Cidades disponíveis:", uniqueCities.slice(0, 5));
       }
 
       this.showLoading(false);
     } catch (error) {
       console.error("❌ Erro crítico ao carregar dados:", error);
       this.showLoading(false);
-      this.showError(
-        "Erro ao carregar dados da planilha. Recarregue a página."
-      );
+      this.showError("Erro ao carregar dados da planilha. Recarregue a página.");
     }
   }
 
@@ -94,22 +128,26 @@ class TransportadoraApp {
       });
     }
 
+    // Enter na busca
+    const citySearch = document.getElementById("citySearch");
+    if (citySearch) {
+      citySearch.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
+          this.performSearch();
+        }
+      });
+    }
+
     window.addEventListener("filtersChanged", (event) => {
       const cidade = document.getElementById("citySearch")?.value.trim() || "";
-      if (
-        cidade ||
-        event.detail.filters.uf ||
-        event.detail.filters.modal ||
-        event.detail.filters.transportadora
-      ) {
+      if (cidade || event.detail.filters.uf || event.detail.filters.modal || event.detail.filters.transportadora) {
         this.applyFilters();
       }
     });
   }
 
   performSearch() {
-    const cidadeInput =
-      document.getElementById("citySearch")?.value.trim() || "";
+    const cidadeInput = document.getElementById("citySearch")?.value.trim() || "";
 
     if (!cidadeInput) {
       this.showMessage("Digite o nome de uma cidade para buscar.");
@@ -121,14 +159,13 @@ class TransportadoraApp {
       return;
     }
 
+    console.log(`🔍 Iniciando busca por: "${cidadeInput}"`);
     this.showLoading(true, "Buscando transportadoras...");
 
     setTimeout(() => {
       try {
-        this.filteredData = this.filtersManager.filterData(
-          this.allData,
-          cidadeInput
-        );
+        this.filteredData = this.filtersManager.filterData(this.allData, cidadeInput);
+        console.log(`📊 Resultados da busca: ${this.filteredData.length} encontrados`);
         this.displayResults(this.filteredData, cidadeInput);
       } catch (error) {
         console.error("Erro ao filtrar dados:", error);
@@ -140,24 +177,15 @@ class TransportadoraApp {
   }
 
   applyFilters() {
-    const cidadeInput =
-      document.getElementById("citySearch")?.value.trim() || "";
+    const cidadeInput = document.getElementById("citySearch")?.value.trim() || "";
 
-    if (
-      (cidadeInput ||
-        this.filtersManager.getCurrentFilters().modal ||
-        this.filtersManager.getCurrentFilters().transportadora) &&
-      this.allData &&
-      this.allData.length > 0
-    ) {
+    if ((cidadeInput || this.filtersManager.getCurrentFilters().modal || this.filtersManager.getCurrentFilters().transportadora) && this.allData && this.allData.length > 0) {
       this.showLoading(true, "Aplicando filtros...");
 
       setTimeout(() => {
         try {
-          this.filteredData = this.filtersManager.filterData(
-            this.allData,
-            cidadeInput
-          );
+          this.filteredData = this.filtersManager.filterData(this.allData, cidadeInput);
+          console.log(`📊 Resultados com filtros: ${this.filteredData.length} encontrados`);
           this.displayResults(this.filteredData, cidadeInput);
         } catch (error) {
           console.error("Erro ao aplicar filtros:", error);
@@ -175,9 +203,7 @@ class TransportadoraApp {
 
     data.forEach((item) => {
       if (item && item.cidade && item.uf) {
-        const key = `${item.cidade.toUpperCase().trim()}_${item.uf
-          .toUpperCase()
-          .trim()}`;
+        const key = `${item.cidade.toUpperCase().trim()}_${item.uf.toUpperCase().trim()}`;
         if (!citiesMap.has(key)) {
           citiesMap.set(key, {
             cidade: item.cidade,
@@ -209,16 +235,10 @@ class TransportadoraApp {
     const distancesGrid = document.getElementById("distancesGrid");
     const citiesCount = document.getElementById("citiesCount");
 
-    if (
-      !container ||
-      !countElement ||
-      !titleElement ||
-      !subtitleElement ||
-      !distancesPanel ||
-      !distancesGrid ||
-      !citiesCount
-    )
+    if (!container || !countElement || !titleElement || !subtitleElement || !distancesPanel || !distancesGrid || !citiesCount) {
+      console.error("❌ Elementos do DOM não encontrados");
       return;
+    }
 
     const count = Array.isArray(data) ? data.length : 0;
     countElement.textContent = `${count} resultado${count !== 1 ? "s" : ""}`;
@@ -228,11 +248,11 @@ class TransportadoraApp {
       subtitleElement.textContent = `Encontramos ${count} opções para seu frete`;
     } else {
       titleElement.textContent = "Transportadoras Disponíveis";
-      subtitleElement.textContent =
-        "Encontre as melhores opções para seu frete";
+      subtitleElement.textContent = "Encontre as melhores opções para seu frete";
     }
 
     if (!data || data.length === 0) {
+      console.log("📭 Nenhum resultado encontrado para a busca");
       container.innerHTML = `
         <div class="no-results">
           <div class="no-results-icon">
@@ -242,6 +262,9 @@ class TransportadoraApp {
           </div>
           <h3>Nenhuma transportadora encontrada</h3>
           <p>Tente ajustar os filtros ou verificar a ortografia da cidade</p>
+          <div style="margin-top: 1rem; font-size: 0.9rem; color: var(--text-secondary);">
+            <p><strong>Dica:</strong> Tente buscar por "São Paulo" ou "Rio de Janeiro"</p>
+          </div>
         </div>
       `;
       distancesPanel.style.display = "none";
@@ -250,10 +273,7 @@ class TransportadoraApp {
 
     // ✅ EXTRAIR CIDADES ÚNICAS E MOSTRAR PAINEL
     const uniqueCities = this.extractUniqueCities(data);
-    console.log(
-      `🏙️ ${uniqueCities.length} cidades únicas encontradas:`,
-      uniqueCities
-    );
+    console.log(`🏙️ ${uniqueCities.length} cidades únicas encontradas:`, uniqueCities);
 
     // Atualizar contador de cidades
     citiesCount.textContent = uniqueCities.length;
@@ -262,9 +282,7 @@ class TransportadoraApp {
     distancesPanel.style.display = "block";
 
     // Criar badges de distâncias
-    distancesGrid.innerHTML = uniqueCities
-      .map(
-        (city) => `
+    distancesGrid.innerHTML = uniqueCities.map(city => `
       <div class="distance-badge" id="distance-badge-${city.key}">
         <div class="distance-info">
           <span class="distance-city">${city.cidade}</span>
@@ -275,16 +293,13 @@ class TransportadoraApp {
           <span>Calculando...</span>
         </div>
       </div>
-    `
-      )
-      .join("");
+    `).join("");
 
     // Criar cards
     let cards;
     if (window.PerformanceManager) {
-      cards = await PerformanceManager.measurePerformance(
-        `Criação de ${data.length} cards`,
-        () => Promise.all(data.map((item) => this.createCard(item)))
+      cards = await PerformanceManager.measurePerformance(`Criação de ${data.length} cards`, () => 
+        Promise.all(data.map((item) => this.createCard(item)))
       );
     } else {
       cards = await Promise.all(data.map((item) => this.createCard(item)));
@@ -307,6 +322,7 @@ class TransportadoraApp {
 
   async createCard(item) {
     if (!item || typeof item !== "object") {
+      console.warn("❌ Item inválido para criar card:", item);
       return '<div class="transport-card">Dados inválidos</div>';
     }
 
@@ -323,9 +339,7 @@ class TransportadoraApp {
     return `
     <div class="transport-card" data-city="${cidade}" data-uf="${uf}">
       <div class="card-header">
-        <div class="company-logo ${
-          logo.type === "image" ? "image-logo" : "icon-logo"
-        } ${logoClass}">
+        <div class="company-logo ${logo.type === "image" ? "image-logo" : "icon-logo"} ${logoClass}">
           ${logoHTML}
         </div>
         <div class="card-title">
@@ -370,78 +384,70 @@ class TransportadoraApp {
   async calculateRealDistances(cities) {
     if (!cities || !Array.isArray(cities) || !window.distanceCalculator) {
       console.warn("❌ Dados ou DistanceCalculator não disponíveis");
+      this.showFallbackDistances(cities);
       return;
     }
 
-    console.log(
-      `🔄 Calculando distâncias EXATAS para ${cities.length} cidades...`
-    );
+    console.log(`🔄 Calculando distâncias EXATAS para ${cities.length} cidades...`);
 
     const distancePromises = cities.map(async (city) => {
       try {
-        console.log(
-          `📍 Calculando distância EXATA para: ${city.cidade}, ${city.uf}`
-        );
+        console.log(`📍 Calculando distância EXATA para: ${city.cidade}, ${city.uf}`);
         const realDistance = await this.getRealDistance(city.cidade, city.uf);
 
         if (realDistance && realDistance > 0) {
-          const distanciaFormatada =
-            window.distanceCalculator.formatDistance(realDistance);
+          const distanciaFormatada = window.distanceCalculator.formatDistance(realDistance);
           this.updateCityDistance(city.key, distanciaFormatada);
-          console.log(
-            `✅ DISTÂNCIA EXATA: ${city.cidade}, ${city.uf}: ${distanciaFormatada}`
-          );
+          console.log(`✅ DISTÂNCIA EXATA: ${city.cidade}, ${city.uf}: ${distanciaFormatada}`);
           return { success: true, city: city.key, distance: realDistance };
         } else {
           throw new Error("Distância real não calculada");
         }
       } catch (error) {
-        console.error(
-          `❌ Erro ao calcular distância para ${city.cidade}:`,
-          error
-        );
+        console.error(`❌ Erro ao calcular distância para ${city.cidade}:`, error);
         this.updateCityDistance(city.key, "Erro no cálculo");
         return { success: false, city: city.key, error: error.message };
       }
     });
 
     const results = await Promise.allSettled(distancePromises);
-    const successful = results.filter(
-      (r) => r.status === "fulfilled" && r.value.success
-    ).length;
-    const failed = results.filter(
-      (r) => r.status === "rejected" || !r.value?.success
-    ).length;
+    const successful = results.filter(r => r.status === "fulfilled" && r.value.success).length;
+    const failed = results.filter(r => r.status === "rejected" || !r.value?.success).length;
 
-    console.log(
-      `🎯 Cálculos concluídos: ${successful} sucessos, ${failed} falhas`
-    );
+    console.log(`🎯 Cálculos concluídos: ${successful} sucessos, ${failed} falhas`);
   }
 
   // Obter distância real
   async getRealDistance(cityName, state) {
     try {
-      const preciseDistance =
-        await window.distanceCalculator.getDistanceWithFallback(
-          cityName,
-          state
-        );
+      const preciseDistance = await window.distanceCalculator.getDistanceWithFallback(cityName, state);
 
       if (preciseDistance && preciseDistance > 0) {
-        console.log(
-          `📏 Distância EXATA calculada: ${cityName} - ${preciseDistance}km`
-        );
+        console.log(`📏 Distância EXATA calculada: ${cityName} - ${preciseDistance}km`);
         return preciseDistance;
       } else {
         throw new Error("Distância precisa não disponível");
       }
     } catch (error) {
       console.error(`❌ Falha no cálculo para ${cityName}:`, error);
-      const fallbackDistance =
-        window.distanceCalculator.estimateDistanceByState(state);
+      const fallbackDistance = window.distanceCalculator.estimateDistanceByState(state);
       console.log(`🔄 Usando fallback para ${cityName}: ${fallbackDistance}km`);
       return fallbackDistance;
     }
+  }
+
+  // Fallback para distâncias
+  showFallbackDistances(cities) {
+    if (!cities) return;
+    
+    cities.forEach(city => {
+      const fallbackDistance = window.distanceCalculator ? 
+        window.distanceCalculator.estimateDistanceByState(city.uf) : 0;
+      const formattedDistance = window.distanceCalculator ? 
+        window.distanceCalculator.formatDistance(fallbackDistance) : "Indisponível";
+      
+      this.updateCityDistance(city.key, formattedDistance);
+    });
   }
 
   // Atualizar distância
@@ -474,11 +480,7 @@ class TransportadoraApp {
           src="${logo.content}"
           alt="${logo.alt}"
           class="logo-img"
-          onerror="this.onerror=null; this.src='${
-            logo.fallback ||
-            "https://via.placeholder.com/60x60/6B7280/FFFFFF?text=" +
-              transportadora.substring(0, 3)
-          }'"
+          onerror="this.onerror=null; this.src='${logo.fallback || "https://via.placeholder.com/60x60/6B7280/FFFFFF?text=" + transportadora.substring(0, 3)}'"
           loading="lazy"
         >
       `;
@@ -529,9 +531,7 @@ class TransportadoraApp {
 
     if (countElement) countElement.textContent = "0 resultados";
     if (titleElement) titleElement.textContent = "Transportadoras Disponíveis";
-    if (subtitleElement)
-      subtitleElement.textContent =
-        "Encontre as melhores opções para seu frete";
+    if (subtitleElement) subtitleElement.textContent = "Encontre as melhores opções para seu frete";
     if (distancesPanel) distancesPanel.style.display = "none";
   }
 
