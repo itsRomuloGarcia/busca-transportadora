@@ -1,8 +1,8 @@
 // Calculador de distâncias otimizado - DISTÂNCIAS EXATAS
 class DistanceCalculator {
   constructor() {
-    this.origin = "Camboriú, SC, Brasil";
-    this.originCoords = { lat: -27.024, lng: -48.655 };
+    this.origin = "Balneário Camboriú, SC, Brasil";
+    this.originCoords = { lat: -26.9906, lng: -48.6347 };
 
     // Cache para distâncias já calculadas
     this.distanceCache = new Map();

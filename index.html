@@ -50,6 +50,12 @@
             </div>
           </div>
           <div class="header-actions">
+            <!-- Weather Widget -->
+            <div id="weatherWidget" class="weather-widget">
+              <div class="weather-loading">
+                <div class="mini-spinner"></div>
+              </div>
+            </div>
             <button
               id="themeToggle"
               class="theme-toggle"
@@ -198,11 +204,11 @@
                   />
                 </svg>
                 <span id="distancesTitle"
-                  >Distância aproximada a partir de Camboriú, SC</span
+                  >Distância aproximada a partir de Balneário Camboriú, SC</span
                 >
               </div>
               <div class="cities-count">
-                <span id="citiesCount"></span>
+                <span id="citiesCount">0</span>
               </div>
             </div>
             <div
@@ -232,7 +238,9 @@
                 </svg>
               </div>
               <h3>Nenhuma busca realizada</h3>
-              <p>Digite o nome de uma cidade acima</p>
+              <p>
+                Digite o nome de uma cidade acima para encontrar transportadoras
+              </p>
             </div>
           </div>
 
@@ -277,7 +285,9 @@
               </div>
               <p></p>
             </div>
-            <p class="footer-copyright">&copy; 2025 TransportFinder - Desenvolvido com ajuda da IA</p>
+            <p class="footer-copyright">
+              &copy; 2025 TransportFinder - Desenvolvido com ajuda da IA
+            </p>
           </div>
           <div class="footer-links">
             <div class="footer-social">
@@ -334,6 +344,7 @@
     <script src="js/distance-calculator.js"></script>
     <script src="js/logo-manager.js"></script>
     <script src="js/performance.js"></script>
+    <script src="js/weather-service.js"></script>
     <script src="js/app.js"></script>
 
     <!-- Structured Data -->
@@ -355,4 +366,3 @@
     </script>
   </body>
 </html>
-

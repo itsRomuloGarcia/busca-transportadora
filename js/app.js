@@ -1,9 +1,14 @@
-// Aplicação principal - ATUALIZADA SEM CONTADORES
+// Aplicação principal - TRANSPORTADORA EM DESTAQUE COM EVENT DELEGATION
 class TransportadoraApp {
   constructor() {
     this.sheetsAPI = new GoogleSheetsAPI();
     this.allData = [];
     this.filteredData = [];
+    this.currentExpandedCard = null;
+
+    // Handlers para event delegation
+    this._cardClickHandler = null;
+    this._cardKeyHandler = null;
 
     this.initializeDistanceCalculator();
     this.setupPerformance();
@@ -70,6 +75,10 @@ class TransportadoraApp {
       await this.initializeDistanceCalculator();
       await this.loadData();
       this.setupEventListeners();
+
+      if (window.weatherService) {
+        console.log("🌤️ Serviço de clima integrado");
+      }
     } catch (error) {
       console.error("Erro ao inicializar app:", error);
       this.showError("Erro ao inicializar a aplicação.");
@@ -111,7 +120,6 @@ class TransportadoraApp {
       });
     }
 
-    // Busca por Enter
     const citySearch = document.getElementById("citySearch");
     if (citySearch) {
       citySearch.addEventListener("keypress", (e) => {
@@ -121,7 +129,9 @@ class TransportadoraApp {
       });
     }
 
-    // Analytics para buscas
+    // Configurar event delegation uma vez no início
+    this.setupCardInteractions();
+
     this.setupAnalytics();
   }
 
@@ -166,8 +176,6 @@ class TransportadoraApp {
     }
 
     this.showLoading(true, "Buscando transportadoras...");
-
-    // Atualizar status para screen readers
     this.updateResultsStatus(`Buscando transportadoras para ${cidadeInput}`);
 
     setTimeout(() => {
@@ -175,7 +183,6 @@ class TransportadoraApp {
         this.filteredData = this.filterData(this.allData, cidadeInput);
         this.displayResults(this.filteredData, cidadeInput);
 
-        // Analytics
         if (window.gtag) {
           gtag("event", "search_results", {
             search_term: cidadeInput,
@@ -192,7 +199,6 @@ class TransportadoraApp {
     }, 300);
   }
 
-  // Filtro simplificado sem sistema de filtros complexo
   filterData(data, cidadeInput) {
     if (!data || !Array.isArray(data)) {
       console.warn("Dados inválidos para filtragem");
@@ -220,7 +226,6 @@ class TransportadoraApp {
       const itemCidade = item.cidade || "";
       const itemUf = item.uf || "";
 
-      // Busca exata
       const matchesCidade =
         !cidadeUpper || itemCidade.toUpperCase() === cidadeUpper;
       const matchesUf = !uf || itemUf === uf.toUpperCase();
@@ -229,7 +234,7 @@ class TransportadoraApp {
     });
   }
 
-  // ✅ MÉTODO ATUALIZADO PARA NOVO LAYOUT
+  // ✅ MÉTODO displayResults COM EVENT DELEGATION
   async displayResults(data, cidadeInput) {
     const container = document.getElementById("resultsContainer");
     const countElement = document.getElementById("resultsCount");
@@ -262,7 +267,6 @@ class TransportadoraApp {
         "Encontre as melhores opções para seu frete";
     }
 
-    // Atualizar status para screen readers
     this.updateResultsStatus(
       `${count} resultados encontrados para ${cidadeInput}`
     );
@@ -283,20 +287,15 @@ class TransportadoraApp {
       return;
     }
 
-    // Extrair cidades únicas
     const uniqueCities = this.extractUniqueCities(data);
     console.log(
       `🏙️ ${uniqueCities.length} cidades únicas encontradas:`,
       uniqueCities
     );
 
-    // Atualizar contador de cidades
     citiesCount.textContent = uniqueCities.length;
-
-    // Mostrar painel de distâncias
     distancesPanel.style.display = "block";
 
-    // Criar badges de distâncias
     distancesGrid.innerHTML = uniqueCities
       .map(
         (city) => `
@@ -314,7 +313,6 @@ class TransportadoraApp {
       )
       .join("");
 
-    // Criar cards
     let cards;
     if (window.PerformanceManager) {
       cards = await PerformanceManager.measurePerformance(
@@ -325,14 +323,15 @@ class TransportadoraApp {
       cards = await Promise.all(data.map((item) => this.createCard(item)));
     }
 
+    // ✅ CORREÇÃO: Simplesmente substituir o conteúdo
     container.innerHTML = cards.join("");
 
-    // Iniciar cálculo de distâncias
+    // ✅ EVENT DELEGATION JÁ ESTÁ CONFIGURADO - não precisa reconfigurar
+
     setTimeout(() => {
       this.calculateRealDistances(uniqueCities);
     }, 100);
 
-    // Ativar lazy loading
     if (window.lazyLoader) {
       setTimeout(() => {
         window.lazyLoader.observeAllLazyImages();
@@ -340,13 +339,7 @@ class TransportadoraApp {
     }
   }
 
-  updateResultsStatus(message) {
-    const statusElement = document.getElementById("resultsStatus");
-    if (statusElement) {
-      statusElement.textContent = message;
-    }
-  }
-
+  // ✅ MÉTODO createCard - TRANSPORTADORA EM DESTAQUE
   async createCard(item) {
     if (!item || typeof item !== "object") {
       return '<div class="transport-card">Dados inválidos</div>';
@@ -362,53 +355,248 @@ class TransportadoraApp {
     const logoClass = transportadora.toLowerCase().replace(/[^a-z0-9]/g, "-");
     const logoHTML = this.generateLogoHTML(logo, transportadora, logoClass);
 
+    const cardId = `card-${cidade.replace(
+      /\s+/g,
+      "-"
+    )}-${uf}-${transportadora.replace(/\s+/g, "-")}`;
+
     return `
-    <div class="transport-card" data-city="${cidade}" data-uf="${uf}">
-      <div class="card-header">
-        <div class="company-logo ${
-          logo.type === "image" ? "image-logo" : "icon-logo"
-        } ${logoClass}">
+    <div class="transport-card compact" id="${cardId}" data-item='${JSON.stringify(
+      item
+    )}' tabindex="0">
+      <div class="card-header-compact">
+        <div class="company-logo-compact ${logoClass}">
           ${logoHTML}
         </div>
-        <div class="card-title">
-          <div class="city-name">${cidade}</div>
-          <div class="state">${uf}</div>
+        <div class="card-info-compact">
+          <!-- TRANSPORTADORA EM DESTAQUE (nome grande) -->
+          <div class="transportadora-name-compact">${transportadora}</div>
+          <div class="card-meta-compact">
+            <span class="meta-item">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+              </svg>
+              ${cidade}, ${uf}
+            </span>
+            <span class="meta-item">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4z"/>
+              </svg>
+              ${modal}
+            </span>
+            <span class="meta-item">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+              </svg>
+              ${diasUteis} dias
+            </span>
+          </div>
+        </div>
+        <div class="expand-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/>
+          </svg>
         </div>
       </div>
-      <div class="card-details">
-        <div class="detail-item">
-          <span class="detail-label">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4z"/>
-            </svg>
-            Transportadora
-          </span>
-          <span class="detail-value">${transportadora}</span>
+      
+      <div class="card-expanded-content">
+        <div class="expanded-section">
+          <div class="section-title">Informações da Entrega</div>
+          <div class="details-grid">
+            <div class="detail-row">
+              <span class="detail-label">Transportadora:</span>
+              <span class="detail-value">${transportadora}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Cidade/UF:</span>
+              <span class="detail-value">${cidade}, ${uf}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Modal:</span>
+              <span class="modal-badge">${modal}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Prazo de entrega:</span>
+              <span class="prazo-badge">${diasUteis} dias úteis</span>
+            </div>
+          </div>
         </div>
-        <div class="detail-item">
-          <span class="detail-label">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-            </svg>
-            Modal
-          </span>
-          <span class="modal-badge">${modal}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
-            </svg>
-            Prazo de entrega
-          </span>
-          <span class="prazo">${diasUteis} dias úteis</span>
+        
+        <div class="expanded-section">
+          <div class="section-title">Distância e Localização</div>
+          <div class="details-grid">
+            <div class="detail-row">
+              <span class="detail-label">Distância de Balneário Camboriú, SC:</span>
+              <span class="detail-value">
+                <div class="distance-loading" id="distance-${cardId}">
+                  <div class="mini-spinner"></div>
+                  Calculando distância...
+                </div>
+              </span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Origem:</span>
+              <span class="detail-value">Balneário Camboriú, SC</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Destino:</span>
+              <span class="detail-value">${cidade}, ${uf}</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-    `;
+  `;
   }
 
-  // Resto dos métodos permanecem iguais...
+  // ✅ EVENT DELEGATION - CONFIGURADO UMA VEZ NO INÍCIO
+  setupCardInteractions() {
+    const container = document.getElementById("resultsContainer");
+    if (!container) {
+      console.log(
+        "⏳ Container de resultados não encontrado, tentando novamente..."
+      );
+      setTimeout(() => this.setupCardInteractions(), 100);
+      return;
+    }
+
+    console.log("🎯 Configurando event delegation para cards...");
+
+    // Remove event listeners antigos se existirem
+    if (this._cardClickHandler) {
+      container.removeEventListener("click", this._cardClickHandler);
+    }
+    if (this._cardKeyHandler) {
+      container.removeEventListener("keydown", this._cardKeyHandler);
+    }
+
+    // ✅ EVENT DELEGATION PARA CLICKS
+    this._cardClickHandler = (e) => {
+      const card = e.target.closest(".transport-card");
+      if (card) {
+        console.log("🎯 Card clicado via delegation:", card.id);
+        this.toggleCard(card);
+      }
+    };
+
+    // ✅ EVENT DELEGATION PARA TECLADO
+    this._cardKeyHandler = (e) => {
+      if (
+        (e.key === "Enter" || e.key === " ") &&
+        e.target.closest(".transport-card")
+      ) {
+        e.preventDefault();
+        const card = e.target.closest(".transport-card");
+        if (card) {
+          console.log("🎯 Card ativado via teclado:", card.id);
+          this.toggleCard(card);
+        }
+      }
+    };
+
+    // Adiciona os event listeners
+    container.addEventListener("click", this._cardClickHandler);
+    container.addEventListener("keydown", this._cardKeyHandler);
+
+    console.log("✅ Event delegation configurado com sucesso");
+  }
+
+  // ✅ MÉTODO toggleCard OTIMIZADO
+  toggleCard(card) {
+    if (!card) {
+      console.error("❌ Card não encontrado");
+      return;
+    }
+
+    const allCards = document.querySelectorAll(".transport-card");
+
+    // Fechar outros cards abertos
+    allCards.forEach((otherCard) => {
+      if (otherCard !== card && otherCard.classList.contains("expanded")) {
+        otherCard.classList.remove("expanded");
+        otherCard.classList.add("compact");
+      }
+    });
+
+    // Alternar estado do card clicado
+    const wasExpanded = card.classList.contains("expanded");
+
+    if (wasExpanded) {
+      card.classList.remove("expanded");
+      card.classList.add("compact");
+      this.currentExpandedCard = null;
+    } else {
+      card.classList.remove("compact");
+      card.classList.add("expanded");
+      this.currentExpandedCard = card;
+
+      // Calcular distância se ainda não foi calculada
+      this.calculateDistanceForCard(card);
+
+      // Scroll suave para o card expandido
+      setTimeout(() => {
+        card.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }, 100);
+    }
+  }
+
+  // ✅ CALCULAR DISTÂNCIA PARA CARD ESPECÍFICO
+  async calculateDistanceForCard(card) {
+    const itemData = card.getAttribute("data-item");
+    if (!itemData) return;
+
+    try {
+      const item = JSON.parse(itemData);
+      const distanceElement = card.querySelector(".distance-loading");
+
+      if (
+        !distanceElement ||
+        distanceElement.classList.contains("calculated")
+      ) {
+        return;
+      }
+
+      const cidade = item.cidade;
+      const uf = item.uf;
+      const cardId = card.id;
+
+      if (window.distanceCalculator) {
+        const distance = await window.distanceCalculator.getDistanceToCity(
+          cidade,
+          uf
+        );
+        const formattedDistance =
+          window.distanceCalculator.formatDistance(distance);
+
+        distanceElement.innerHTML = `
+          <div class="distance-display">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+            </svg>
+            ${formattedDistance}
+          </div>
+        `;
+        distanceElement.classList.remove("distance-loading");
+        distanceElement.classList.add("calculated");
+      }
+    } catch (error) {
+      console.error("Erro ao calcular distância para card:", error);
+      const distanceElement = card.querySelector(".distance-loading");
+      if (distanceElement) {
+        distanceElement.innerHTML =
+          '<span style="color: var(--error-color);">Erro no cálculo</span>';
+        distanceElement.classList.remove("distance-loading");
+      }
+    }
+  }
+
+  updateResultsStatus(message) {
+    const statusElement = document.getElementById("resultsStatus");
+    if (statusElement) {
+      statusElement.textContent = message;
+    }
+  }
+
   extractUniqueCities(data) {
     const citiesMap = new Map();
 
