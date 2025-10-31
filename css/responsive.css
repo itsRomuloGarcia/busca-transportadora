@@ -10,34 +10,23 @@
     text-align: center;
   }
 
-  .header-text h1 {
-    font-size: 2.25rem;
+  .hero-title {
+    font-size: 3rem;
   }
 
-  .hero-content h2 {
-    font-size: 2.25rem;
+  .hero-subtitle {
+    font-size: 1.2rem;
+  }
+
+  .hero-stats {
+    gap: 2rem;
+  }
+
+  .stat-number {
+    font-size: 2rem;
   }
 
   .search-box {
-    flex-direction: column;
-  }
-
-  .filters-header {
-    flex-direction: column;
-    gap: 1.5rem;
-    align-items: flex-start;
-  }
-
-  .filters-actions {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .filters-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .filter-actions {
     flex-direction: column;
   }
 
@@ -75,77 +64,65 @@
   }
 
   .header {
-    padding: 1.25rem 0;
-  }
-
-  .header-text h1 {
-    font-size: 2rem;
-  }
-
-  .header-text p {
-    font-size: 1rem;
-  }
-
-  .main {
-    padding: 1.5rem 0;
+    padding: 1rem 0;
   }
 
   .hero-section {
+    padding: 4rem 0 3rem;
+  }
+
+  .hero-title {
+    font-size: 2.5rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+  }
+
+  .hero-stats {
+    gap: 1.5rem;
+  }
+
+  .stat-number {
+    font-size: 1.8rem;
+  }
+
+  .stat-label {
+    font-size: 0.8rem;
+  }
+
+  .main {
     padding: 2rem 0;
   }
 
-  .hero-content h2 {
-    font-size: 2rem;
+  .search-container {
+    padding: 2rem;
+    margin-top: -60px;
   }
 
-  .hero-content p {
-    font-size: 1.1rem;
+  .search-header h2 {
+    font-size: 1.5rem;
   }
 
-  .search-container,
-  .filters-container,
   .results-section {
-    padding: 1.5rem;
+    padding: 2rem;
   }
 
-  .search-header h3 {
-    font-size: 1.3rem;
-  }
-
-  .filters-title h3 {
-    font-size: 1.2rem;
-  }
-
-  .results-info h3 {
-    font-size: 1.3rem;
+  .results-info h2 {
+    font-size: 1.5rem;
   }
 
   .transport-card {
-    padding: 1.25rem;
+    padding: 1.5rem;
   }
 
   .city-name {
     font-size: 1.2rem;
   }
 
-  .modal-content {
-    margin: 1rem;
-    width: calc(100% - 2rem);
-  }
-
-  .modal-header,
-  .modal-body,
-  .modal-footer {
-    padding: 1.5rem;
-  }
-
-  .comparison-table {
-    font-size: 0.85rem;
-  }
-
-  .comparison-table th,
-  .comparison-table td {
-    padding: 0.75rem;
+  .distances-grid {
+    grid-template-columns: 1fr;
   }
 
   .autocomplete-results {
@@ -167,65 +144,65 @@
   }
 
   .header {
-    padding: 1rem 0;
+    padding: 0.75rem 0;
   }
 
-  .header-text h1 {
-    font-size: 1.75rem;
+  .logo {
+    font-size: 1.25rem;
   }
 
-  .header-text p {
-    font-size: 0.9rem;
+  .hero-section {
+    padding: 3rem 0 2rem;
   }
 
-  .theme-toggle {
-    width: 44px;
-    height: 44px;
-    font-size: 1.1rem;
+  .hero-title {
+    font-size: 2rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .hero-stats {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .stat-item {
+    flex-direction: row;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  .stat-number {
+    font-size: 1.5rem;
+    margin-bottom: 0;
   }
 
   .main {
     padding: 1rem 0;
   }
 
-  .hero-section {
-    padding: 1.5rem 0;
-    margin-bottom: 1.5rem;
-  }
-
-  .hero-content h2 {
-    font-size: 1.75rem;
-  }
-
-  .hero-content p {
-    font-size: 1rem;
-  }
-
-  .search-section {
-    margin-bottom: 2rem;
-  }
-
-  .search-container,
-  .filters-container,
-  .results-section {
-    padding: 1.25rem;
-    border-radius: var(--border-radius-md);
+  .search-container {
+    padding: 1.5rem;
+    margin-top: -40px;
   }
 
   .search-header {
-    margin-bottom: 1.25rem;
+    margin-bottom: 1.5rem;
   }
 
-  .search-header h3 {
-    font-size: 1.2rem;
+  .search-header h2 {
+    font-size: 1.3rem;
   }
 
-  .search-tips {
-    font-size: 0.8rem;
+  .search-header p {
+    font-size: 0.9rem;
   }
 
   .search-input-wrapper input {
-    padding: 0.875rem;
+    padding: 1rem;
     font-size: 0.9rem;
   }
 
@@ -236,69 +213,22 @@
   }
 
   .btn-primary {
-    padding: 0.875rem 1.25rem;
+    padding: 1rem 1.5rem;
     font-size: 0.9rem;
+    width: 100%;
+    justify-content: center;
   }
 
-  .btn-secondary,
-  .btn-comparison {
-    padding: 0.625rem 1rem;
-    font-size: 0.85rem;
-  }
-
-  .filters-section {
-    margin-bottom: 2rem;
-  }
-
-  .filters-header {
-    margin-bottom: 1.25rem;
-  }
-
-  .filters-title h3 {
-    font-size: 1.1rem;
-  }
-
-  .filters-subtitle {
-    font-size: 0.8rem;
-  }
-
-  .filters-actions {
-    gap: 0.75rem;
-  }
-
-  .filters-content {
-    padding-top: 1.25rem;
-  }
-
-  .filters-grid {
-    gap: 1.25rem;
-    margin-bottom: 1.25rem;
-  }
-
-  .filter-group {
-    gap: 0.625rem;
-  }
-
-  .filter-group label {
-    font-size: 0.85rem;
-  }
-
-  .filter-group select {
-    padding: 0.625rem 0.875rem;
-    font-size: 0.85rem;
-  }
-
-  .filter-actions {
-    gap: 0.75rem;
+  .results-section {
+    padding: 1.5rem;
   }
 
   .results-header {
     margin-bottom: 1.5rem;
-    padding-bottom: 1.25rem;
   }
 
-  .results-info h3 {
-    font-size: 1.2rem;
+  .results-info h2 {
+    font-size: 1.3rem;
   }
 
   .results-info p {
@@ -306,8 +236,8 @@
   }
 
   .results-count {
-    padding: 0.375rem 0.75rem;
-    font-size: 0.75rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
   }
 
   .results-container {
@@ -319,12 +249,30 @@
     padding: 1.25rem;
   }
 
+  .card-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+
+  .company-logo {
+    width: 60px;
+    height: 60px;
+    align-self: center;
+  }
+
   .city-name {
     font-size: 1.1rem;
   }
 
   .card-details {
     gap: 0.875rem;
+  }
+
+  .detail-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
   }
 
   .detail-label,
@@ -334,59 +282,32 @@
 
   .prazo,
   .modal-badge {
-    padding: 0.375rem 0.75rem;
-    font-size: 0.75rem;
-  }
-
-  .modal {
-    padding: 0.5rem;
-  }
-
-  .modal-content {
-    margin: 0.5rem;
-    width: calc(100% - 1rem);
-    max-height: 95vh;
-  }
-
-  .modal-header {
-    padding: 1.25rem 1.25rem 0.75rem;
-  }
-
-  .modal-body {
-    padding: 1.25rem;
-  }
-
-  .modal-footer {
-    padding: 1.25rem;
-    flex-direction: column;
-  }
-
-  .modal-title h3 {
-    font-size: 1.2rem;
-  }
-
-  .modal-title p {
+    padding: 0.5rem 1rem;
     font-size: 0.8rem;
   }
 
-  .comparison-table {
-    font-size: 0.8rem;
+  .distances-panel {
+    padding: 1.5rem;
   }
 
-  .comparison-table th,
-  .comparison-table td {
-    padding: 0.5rem;
+  .distances-title {
+    font-size: 1rem;
+  }
+
+  .distance-badge {
+    padding: 0.875rem 1rem;
   }
 
   .no-results {
     padding: 3rem 1rem;
   }
 
-  .no-results-icon {
-    font-size: 3rem;
+  .no-results-icon svg {
+    width: 80px;
+    height: 80px;
   }
 
-  .no-results h4 {
+  .no-results h3 {
     font-size: 1.3rem;
   }
 
@@ -407,12 +328,12 @@
   }
 
   .spinner {
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 50px;
   }
 
   .footer {
-    padding: 2rem 0 1.5rem;
+    padding: 2.5rem 0 1.5rem;
     margin-top: 3rem;
   }
 
@@ -420,21 +341,21 @@
     gap: 1.5rem;
   }
 
-  .footer-logo h4 {
+  .footer-brand .logo {
     font-size: 1.2rem;
   }
 
-  .footer-logo p {
-    font-size: 0.8rem;
+  .footer-brand p {
+    font-size: 0.9rem;
   }
 
   .footer-copyright {
-    font-size: 0.75rem;
+    font-size: 0.8rem;
   }
 
   .social-link {
     font-size: 0.85rem;
-    padding: 0.375rem;
+    padding: 0.5rem;
   }
 
   .social-link svg {
@@ -449,56 +370,42 @@
     padding: 0 12px;
   }
 
-  .header-text h1 {
-    font-size: 1.5rem;
-  }
-
-  .hero-content h2 {
-    font-size: 1.5rem;
+  .hero-title {
+    font-size: 1.75rem;
   }
 
   .search-container,
-  .filters-container,
   .results-section {
-    padding: 1rem;
+    padding: 1.25rem;
   }
 
   .transport-card {
     padding: 1rem;
   }
 
-  .btn-primary,
-  .btn-secondary,
-  .btn-comparison {
-    font-size: 0.8rem;
-  }
-
-  .modal-header,
-  .modal-body,
-  .modal-footer {
-    padding: 1rem;
+  .btn-primary {
+    font-size: 0.85rem;
+    padding: 0.875rem 1.25rem;
   }
 }
 
 /* Orientation-specific styles */
 @media (max-height: 600px) and (orientation: landscape) {
   .header {
-    padding: 1rem 0;
+    padding: 0.5rem 0;
   }
 
   .hero-section {
-    padding: 1rem 0;
-    margin-bottom: 1rem;
+    padding: 2rem 0;
   }
 
-  .search-container,
-  .filters-container,
+  .search-container {
+    padding: 1.5rem;
+    margin-top: -30px;
+  }
+
   .results-section {
-    padding: 1rem;
-  }
-
-  .modal-content {
-    max-height: 80vh;
+    padding: 1.5rem;
   }
 
   .autocomplete-results {
@@ -506,49 +413,28 @@
   }
 }
 
-/* High-resolution displays */
-@media (min-resolution: 192dpi) {
-  .search-input-wrapper,
-  .filter-group select,
-  .transport-card {
-    border-width: 1.5px;
-  }
-}
-
-/* Reduced motion support */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
 /* Dark mode auto-detection */
 @media (prefers-color-scheme: dark) {
   body:not(.light-mode) {
-    --bg-primary: #0f0f0f;
-    --bg-secondary: #1a1a1a;
-    --bg-tertiary: #2d2d2d;
-    --text-primary: #ffffff;
-    --text-secondary: #b0b0b0;
-    --text-tertiary: #808080;
-    --border-color: #404040;
-    --card-bg: #1e1e1e;
-    --input-bg: #2d2d2d;
-    --modal-bg: #2d2d2d;
-    --glass-bg: rgba(30, 30, 30, 0.9);
-    --glass-border: rgba(255, 255, 255, 0.1);
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-tertiary: #334155;
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --text-tertiary: #64748b;
+    --border-color: #334155;
+    --card-bg: #1e293b;
+    --input-bg: #334155;
   }
 }
 
 /* Print styles */
 @media print {
   .header,
-  .filters-section,
   .footer,
   .theme-toggle,
-  .btn-comparison {
+  .hero-section,
+  .distances-panel {
     display: none !important;
   }
 
@@ -563,6 +449,7 @@
   .search-container {
     box-shadow: none;
     border: 1px solid #ccc;
+    margin-top: 0;
   }
 
   .results-section {
@@ -573,10 +460,72 @@
   .transport-card {
     break-inside: avoid;
     border: 1px solid #ccc;
+    box-shadow: none !important;
+  }
+
+  .transport-card:hover {
+    transform: none !important;
   }
 
   body {
     background: white !important;
     color: black !important;
+    font-size: 12pt;
+  }
+
+  .btn-primary {
+    background: #333 !important;
+    color: white !important;
+  }
+}
+
+/* High-DPI screens */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .search-input-wrapper,
+  .transport-card,
+  .autocomplete-results {
+    border-width: 0.5px;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .transport-card:hover {
+    transform: none;
+  }
+
+  .autocomplete-item:hover {
+    background: transparent;
+    transform: none;
+  }
+
+  .btn-primary:hover {
+    transform: none;
+  }
+
+  .search-input-wrapper:focus-within {
+    transform: none;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .hero-shape {
+    animation: none;
+  }
+
+  .transport-card,
+  .btn-primary,
+  .autocomplete-item,
+  .distance-badge {
+    transition: none;
+  }
+
+  .results-count {
+    animation: none;
+  }
+
+  .no-results-icon {
+    animation: none;
   }
 }

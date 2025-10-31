@@ -23,6 +23,14 @@ class ThemeManager {
     this.theme = this.theme === "dark" ? "light" : "dark";
     this.applyTheme();
     this.saveTheme();
+
+    // Analytics
+    if (window.gtag) {
+      gtag("event", "theme_toggle", {
+        theme: this.theme,
+        event_category: "UI",
+      });
+    }
   }
 
   applyTheme() {

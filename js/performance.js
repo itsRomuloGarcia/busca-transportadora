@@ -29,7 +29,7 @@ class PerformanceManager {
   static preloadCriticalImages() {
     const criticalImages = [
       "https://marketing-jamef-prd.s3.us-east-2.amazonaws.com/site/assets/logotipos/nova-logo-jamef.svg",
-      "http://www.azulcargoexpress.com.br//Images/logoAzul.png",
+      "https://www.azulcargoexpress.com.br/Images/logoAzul.png",
       "https://www.tbl.com.br/site/img/LOGO-TBL-BRANCO.png",
     ];
 
@@ -38,7 +38,7 @@ class PerformanceManager {
       img.src = src;
     });
 
-    console.log("Logos críticas pré-carregadas");
+    console.log("🖼️ Logos críticas pré-carregadas");
   }
 
   // Medir performance de operações
@@ -50,6 +50,16 @@ class PerformanceManager {
     console.log(
       `⏱️ ${operationName} levou ${(endTime - startTime).toFixed(2)}ms`
     );
+
+    // Enviar para analytics se disponível
+    if (window.gtag) {
+      gtag("event", "timing_complete", {
+        name: operationName,
+        value: Math.round(endTime - startTime),
+        event_category: "Performance",
+      });
+    }
+
     return result;
   }
 
@@ -91,12 +101,40 @@ class PerformanceManager {
       });
     });
   }
+
+  // Monitorar Core Web Vitals
+  static monitorWebVitals() {
+    if ("web-vitals" in window) {
+      window.webVitals.getCLS(console.log);
+      window.webVitals.getFID(console.log);
+      window.webVitals.getFCP(console.log);
+      window.webVitals.getLCP(console.log);
+      window.webVitals.getTTFB(console.log);
+    }
+  }
+
+  // Prevenir memory leaks
+  static setupCleanup() {
+    window.addEventListener("beforeunload", () => {
+      // Limpar timeouts e intervals
+      const highestTimeoutId = setTimeout(() => {}, 0);
+      for (let i = 0; i < highestTimeoutId; i++) {
+        clearTimeout(i);
+      }
+
+      // Limpar event listeners customizados se necessário
+      if (window.transportadoraApp && window.transportadoraApp.destroy) {
+        window.transportadoraApp.destroy();
+      }
+    });
+  }
 }
 
 // Intersection Observer para lazy loading de imagens
 class LazyLoader {
   constructor() {
     this.observer = null;
+    this.observedElements = new Set();
     this.init();
   }
 
@@ -121,13 +159,22 @@ class LazyLoader {
     if (img.dataset.src) {
       img.src = img.dataset.src;
       img.classList.remove("lazy");
+      img.removeAttribute("data-src");
     }
-    this.observer.unobserve(img);
+    this.unobserve(img);
   }
 
   observe(element) {
-    if (this.observer && element) {
+    if (this.observer && element && !this.observedElements.has(element)) {
       this.observer.observe(element);
+      this.observedElements.add(element);
+    }
+  }
+
+  unobserve(element) {
+    if (this.observer && element) {
+      this.observer.unobserve(element);
+      this.observedElements.delete(element);
     }
   }
 
@@ -135,6 +182,13 @@ class LazyLoader {
     const lazyImages = document.querySelectorAll("img[data-src]");
     lazyImages.forEach((img) => this.observe(img));
     console.log(`🔍 Observando ${lazyImages.length} imagens para lazy loading`);
+  }
+
+  disconnect() {
+    if (this.observer) {
+      this.observer.disconnect();
+      this.observedElements.clear();
+    }
   }
 }
 
@@ -161,7 +215,34 @@ document.addEventListener("DOMContentLoaded", () => {
   // Habilitar scroll suave
   PerformanceManager.enableSmoothScroll();
 
+  // Monitorar performance
+  PerformanceManager.setupCleanup();
+
   console.log("🚀 Performance managers inicializados");
+
+  // Error boundary global
+  window.addEventListener("error", (event) => {
+    console.error("Erro global:", event.error);
+
+    // Enviar para analytics se disponível
+    if (window.gtag) {
+      gtag("event", "exception", {
+        description: event.error?.message || "Erro desconhecido",
+        fatal: false,
+      });
+    }
+  });
+
+  window.addEventListener("unhandledrejection", (event) => {
+    console.error("Promise rejeitada:", event.reason);
+
+    if (window.gtag) {
+      gtag("event", "exception", {
+        description: event.reason?.message || "Promise rejeitada",
+        fatal: false,
+      });
+    }
+  });
 });
 
 // ✅ EXPORTAR CORRETAMENTE

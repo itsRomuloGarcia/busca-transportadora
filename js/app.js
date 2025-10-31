@@ -1,13 +1,13 @@
-// Aplicação principal - ATUALIZADA PARA NOVO LAYOUT
+// Aplicação principal - ATUALIZADA SEM CONTADORES
 class TransportadoraApp {
   constructor() {
     this.sheetsAPI = new GoogleSheetsAPI();
-    this.filtersManager = new FiltersManager();
     this.allData = [];
     this.filteredData = [];
 
     this.initializeDistanceCalculator();
     this.setupPerformance();
+    this.setupScrollEffect();
     this.init();
   }
 
@@ -40,18 +40,35 @@ class TransportadoraApp {
     }
   }
 
+  setupScrollEffect() {
+    let ticking = false;
+
+    const updateHeader = () => {
+      const header = document.querySelector(".header");
+      const scrolled = window.pageYOffset > 50;
+
+      if (scrolled) {
+        header.classList.add("scrolled");
+      } else {
+        header.classList.remove("scrolled");
+      }
+      ticking = false;
+    };
+
+    const onScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(updateHeader);
+        ticking = true;
+      }
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+  }
+
   async init() {
     try {
       await this.initializeDistanceCalculator();
       await this.loadData();
-
-      if (this.allData && this.allData.length > 0) {
-        this.filtersManager.init(this.allData);
-        console.log("✅ Filtros inicializados com sucesso");
-      } else {
-        console.error("❌ Não foi possível carregar dados para os filtros");
-      }
-
       this.setupEventListeners();
     } catch (error) {
       console.error("Erro ao inicializar app:", error);
@@ -94,17 +111,44 @@ class TransportadoraApp {
       });
     }
 
-    window.addEventListener("filtersChanged", (event) => {
-      const cidade = document.getElementById("citySearch")?.value.trim() || "";
-      if (
-        cidade ||
-        event.detail.filters.uf ||
-        event.detail.filters.modal ||
-        event.detail.filters.transportadora
-      ) {
-        this.applyFilters();
-      }
-    });
+    // Busca por Enter
+    const citySearch = document.getElementById("citySearch");
+    if (citySearch) {
+      citySearch.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
+          this.performSearch();
+        }
+      });
+    }
+
+    // Analytics para buscas
+    this.setupAnalytics();
+  }
+
+  setupAnalytics() {
+    const searchBtn = document.getElementById("searchBtn");
+    const citySearch = document.getElementById("citySearch");
+
+    if (searchBtn && citySearch) {
+      searchBtn.addEventListener("click", () => {
+        this.trackSearch(citySearch.value.trim());
+      });
+
+      citySearch.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
+          this.trackSearch(citySearch.value.trim());
+        }
+      });
+    }
+  }
+
+  trackSearch(query) {
+    if (query && window.gtag) {
+      gtag("event", "search", {
+        search_term: query,
+        event_category: "search",
+      });
+    }
   }
 
   performSearch() {
@@ -123,13 +167,22 @@ class TransportadoraApp {
 
     this.showLoading(true, "Buscando transportadoras...");
 
+    // Atualizar status para screen readers
+    this.updateResultsStatus(`Buscando transportadoras para ${cidadeInput}`);
+
     setTimeout(() => {
       try {
-        this.filteredData = this.filtersManager.filterData(
-          this.allData,
-          cidadeInput
-        );
+        this.filteredData = this.filterData(this.allData, cidadeInput);
         this.displayResults(this.filteredData, cidadeInput);
+
+        // Analytics
+        if (window.gtag) {
+          gtag("event", "search_results", {
+            search_term: cidadeInput,
+            results_count: this.filteredData.length,
+            event_category: "search",
+          });
+        }
       } catch (error) {
         console.error("Erro ao filtrar dados:", error);
         this.showError("Erro ao buscar transportadoras.");
@@ -139,64 +192,41 @@ class TransportadoraApp {
     }, 300);
   }
 
-  applyFilters() {
-    const cidadeInput =
-      document.getElementById("citySearch")?.value.trim() || "";
-
-    if (
-      (cidadeInput ||
-        this.filtersManager.getCurrentFilters().modal ||
-        this.filtersManager.getCurrentFilters().transportadora) &&
-      this.allData &&
-      this.allData.length > 0
-    ) {
-      this.showLoading(true, "Aplicando filtros...");
-
-      setTimeout(() => {
-        try {
-          this.filteredData = this.filtersManager.filterData(
-            this.allData,
-            cidadeInput
-          );
-          this.displayResults(this.filteredData, cidadeInput);
-        } catch (error) {
-          console.error("Erro ao aplicar filtros:", error);
-          this.showError("Erro ao aplicar filtros.");
-        } finally {
-          this.showLoading(false);
-        }
-      }, 200);
+  // Filtro simplificado sem sistema de filtros complexo
+  filterData(data, cidadeInput) {
+    if (!data || !Array.isArray(data)) {
+      console.warn("Dados inválidos para filtragem");
+      return [];
     }
-  }
 
-  // Extrair cidades únicas
-  extractUniqueCities(data) {
-    const citiesMap = new Map();
+    let cidade = "";
+    let uf = "";
 
-    data.forEach((item) => {
-      if (item && item.cidade && item.uf) {
-        const key = `${item.cidade.toUpperCase().trim()}_${item.uf
-          .toUpperCase()
-          .trim()}`;
-        if (!citiesMap.has(key)) {
-          citiesMap.set(key, {
-            cidade: item.cidade,
-            uf: item.uf,
-            transportadoras: new Set(),
-          });
-        }
-        if (item.transportadora) {
-          citiesMap.get(key).transportadoras.add(item.transportadora);
-        }
+    if (cidadeInput.includes(",")) {
+      const parts = cidadeInput.split(",").map((part) => part.trim());
+      cidade = parts[0] || "";
+      uf = parts[1] || "";
+    } else {
+      cidade = cidadeInput;
+    }
+
+    const cidadeUpper = cidade.toUpperCase();
+
+    return data.filter((item) => {
+      if (!item || typeof item !== "object") {
+        return false;
       }
-    });
 
-    return Array.from(citiesMap.values()).map((city) => ({
-      cidade: city.cidade,
-      uf: city.uf,
-      transportadorasCount: city.transportadoras.size,
-      key: `${city.cidade.replace(/\s+/g, "-")}-${city.uf}`,
-    }));
+      const itemCidade = item.cidade || "";
+      const itemUf = item.uf || "";
+
+      // Busca exata
+      const matchesCidade =
+        !cidadeUpper || itemCidade.toUpperCase() === cidadeUpper;
+      const matchesUf = !uf || itemUf === uf.toUpperCase();
+
+      return matchesCidade && matchesUf;
+    });
   }
 
   // ✅ MÉTODO ATUALIZADO PARA NOVO LAYOUT
@@ -232,6 +262,11 @@ class TransportadoraApp {
         "Encontre as melhores opções para seu frete";
     }
 
+    // Atualizar status para screen readers
+    this.updateResultsStatus(
+      `${count} resultados encontrados para ${cidadeInput}`
+    );
+
     if (!data || data.length === 0) {
       container.innerHTML = `
         <div class="no-results">
@@ -241,14 +276,14 @@ class TransportadoraApp {
             </svg>
           </div>
           <h3>Nenhuma transportadora encontrada</h3>
-          <p>Tente ajustar os filtros ou verificar a ortografia da cidade</p>
+          <p>Tente verificar a ortografia da cidade ou buscar por outra localidade</p>
         </div>
       `;
       distancesPanel.style.display = "none";
       return;
     }
 
-    // ✅ EXTRAIR CIDADES ÚNICAS E MOSTRAR PAINEL
+    // Extrair cidades únicas
     const uniqueCities = this.extractUniqueCities(data);
     console.log(
       `🏙️ ${uniqueCities.length} cidades únicas encontradas:`,
@@ -305,6 +340,13 @@ class TransportadoraApp {
     }
   }
 
+  updateResultsStatus(message) {
+    const statusElement = document.getElementById("resultsStatus");
+    if (statusElement) {
+      statusElement.textContent = message;
+    }
+  }
+
   async createCard(item) {
     if (!item || typeof item !== "object") {
       return '<div class="transport-card">Dados inválidos</div>';
@@ -337,7 +379,7 @@ class TransportadoraApp {
         <div class="detail-item">
           <span class="detail-label">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5S5.67 15.5 6 15.5s1.5.67 1.5 1.5S6.83 18.5 6 18.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/>
+              <path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4z"/>
             </svg>
             Transportadora
           </span>
@@ -366,7 +408,36 @@ class TransportadoraApp {
     `;
   }
 
-  // Calcular distâncias reais
+  // Resto dos métodos permanecem iguais...
+  extractUniqueCities(data) {
+    const citiesMap = new Map();
+
+    data.forEach((item) => {
+      if (item && item.cidade && item.uf) {
+        const key = `${item.cidade.toUpperCase().trim()}_${item.uf
+          .toUpperCase()
+          .trim()}`;
+        if (!citiesMap.has(key)) {
+          citiesMap.set(key, {
+            cidade: item.cidade,
+            uf: item.uf,
+            transportadoras: new Set(),
+          });
+        }
+        if (item.transportadora) {
+          citiesMap.get(key).transportadoras.add(item.transportadora);
+        }
+      }
+    });
+
+    return Array.from(citiesMap.values()).map((city) => ({
+      cidade: city.cidade,
+      uf: city.uf,
+      transportadorasCount: city.transportadoras.size,
+      key: `${city.cidade.replace(/\s+/g, "-")}-${city.uf}`,
+    }));
+  }
+
   async calculateRealDistances(cities) {
     if (!cities || !Array.isArray(cities) || !window.distanceCalculator) {
       console.warn("❌ Dados ou DistanceCalculator não disponíveis");
@@ -418,7 +489,6 @@ class TransportadoraApp {
     );
   }
 
-  // Obter distância real
   async getRealDistance(cityName, state) {
     try {
       const preciseDistance =
@@ -444,7 +514,6 @@ class TransportadoraApp {
     }
   }
 
-  // Atualizar distância
   updateCityDistance(cityKey, distanciaFormatada) {
     const distanceBadge = document.getElementById(`distance-badge-${cityKey}`);
 
@@ -474,11 +543,7 @@ class TransportadoraApp {
           src="${logo.content}"
           alt="${logo.alt}"
           class="logo-img"
-          onerror="this.onerror=null; this.src='${
-            logo.fallback ||
-            "https://via.placeholder.com/60x60/6B7280/FFFFFF?text=" +
-              transportadora.substring(0, 3)
-          }'"
+          onerror="this.onerror=null; this.src='${logo.fallback}'"
           loading="lazy"
         >
       `;
@@ -533,6 +598,8 @@ class TransportadoraApp {
       subtitleElement.textContent =
         "Encontre as melhores opções para seu frete";
     if (distancesPanel) distancesPanel.style.display = "none";
+
+    this.updateResultsStatus(message);
   }
 
   showError(message) {
