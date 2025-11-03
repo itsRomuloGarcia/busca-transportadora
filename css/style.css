@@ -1506,3 +1506,182 @@ select:focus-visible {
   padding: 4px;
   border: 2px solid #e2e8f0;
 }
+/* ... (todo o CSS anterior permanece) ... */
+
+/* Search Tabs Styles */
+.search-tabs-container {
+  margin-bottom: 1.5rem;
+}
+
+.search-tabs {
+  display: flex;
+  background: var(--bg-tertiary);
+  border-radius: var(--border-radius-lg);
+  padding: 4px;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--border-color);
+}
+
+.search-tab {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border-radius: var(--border-radius-md);
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.search-tab:hover {
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+}
+
+.search-tab.active {
+  background: var(--gradient-primary);
+  color: white;
+  box-shadow: var(--shadow-sm);
+}
+
+.search-tab-content {
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+
+.search-tab-content.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* CEP Search Styles */
+.cep-search-box {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.cep-input-container {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.cep-search-btn {
+  padding: 1rem 1.5rem;
+  white-space: nowrap;
+}
+
+/* CEP Result Styles */
+.cep-result {
+  background: var(--gradient-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  padding: 1.5rem;
+  animation: slideDown 0.3s ease;
+}
+
+.cep-result-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.cep-address h4 {
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+
+.address-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.address-details span {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.use-address-btn {
+  padding: 0.75rem 1.5rem;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* CEP Error Styles */
+.cep-error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid var(--error-color);
+  border-radius: var(--border-radius-lg);
+  padding: 1rem 1.5rem;
+  animation: slideDown 0.3s ease;
+}
+
+.error-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--error-color);
+}
+
+.error-content svg {
+  flex-shrink: 0;
+}
+
+/* Responsive para CEP */
+@media (max-width: 768px) {
+  .search-tabs {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .cep-input-container {
+    flex-direction: column;
+  }
+
+  .cep-search-btn {
+    width: 100%;
+  }
+
+  .cep-result-content {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .use-address-btn {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .search-tab {
+    padding: 0.6rem 0.8rem;
+    font-size: 0.85rem;
+  }
+
+  .cep-result {
+    padding: 1.25rem;
+  }
+}

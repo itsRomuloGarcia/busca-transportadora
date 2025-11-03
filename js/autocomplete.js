@@ -300,16 +300,19 @@ class AutocompleteManager {
     }
   }
 
+  // ✅ MÉTODO ATUALIZADO: Aceita buscas com acentos
   getSuggestions(query) {
     if (!query) return [];
 
-    const lowerQuery = query.toLowerCase();
+    // Normaliza a query para busca (remove acentos e converte para maiúsculo)
+    const normalizedQuery = this.normalizeForSearch(query);
+    const lowerQuery = normalizedQuery.toLowerCase();
 
     // Filtra cidades que começam com a query (busca mais exata)
     const exactMatches = this.cities.filter(
       (city) =>
-        city.cidade.toLowerCase().startsWith(lowerQuery) ||
-        city.display.toLowerCase().startsWith(lowerQuery)
+        this.normalizeForSearch(city.cidade).startsWith(normalizedQuery) ||
+        this.normalizeForSearch(city.display).startsWith(normalizedQuery)
     );
 
     // Se não encontrou matches exatos, busca por contains
@@ -317,8 +320,8 @@ class AutocompleteManager {
       exactMatches.length === 0
         ? this.cities.filter(
             (city) =>
-              city.cidade.toLowerCase().includes(lowerQuery) ||
-              city.display.toLowerCase().includes(lowerQuery)
+              this.normalizeForSearch(city.cidade).includes(normalizedQuery) ||
+              this.normalizeForSearch(city.display).includes(normalizedQuery)
           )
         : [];
 
@@ -333,13 +336,23 @@ class AutocompleteManager {
     return uniqueMatches.slice(0, 6);
   }
 
-  // MÉTODO highlightMatch
+  // ✅ NOVO MÉTODO: Normaliza texto para busca (remove acentos)
+  normalizeForSearch(text) {
+    if (!text) return "";
+    return text
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "") // Remove acentos
+      .toUpperCase();
+  }
+
+  // MÉTODO highlightMatch ATUALIZADO para trabalhar com texto original
   highlightMatch(text, query) {
     if (!query) return text;
 
-    const lowerText = text.toLowerCase();
-    const lowerQuery = query.toLowerCase();
-    const index = lowerText.indexOf(lowerQuery);
+    const normalizedText = text;
+    const normalizedQuery = this.normalizeForSearch(query);
+
+    const index = normalizedText.toUpperCase().indexOf(normalizedQuery);
 
     if (index === -1) return text;
 
@@ -422,8 +435,9 @@ class AutocompleteManager {
   }
 
   isValidCity(input) {
+    const normalizedInput = this.normalizeForSearch(input);
     return this.cities.some(
-      (city) => city.display.toLowerCase() === input.toLowerCase()
+      (city) => this.normalizeForSearch(city.display) === normalizedInput
     );
   }
 

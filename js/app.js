@@ -4,11 +4,6 @@ class TransportadoraApp {
     this.sheetsAPI = new GoogleSheetsAPI();
     this.allData = [];
     this.filteredData = [];
-    this.currentExpandedCard = null;
-
-    // Handlers para event delegation
-    this._cardClickHandler = null;
-    this._cardKeyHandler = null;
 
     this.initializeDistanceCalculator();
     this.setupPerformance();
@@ -76,8 +71,12 @@ class TransportadoraApp {
       await this.loadData();
       this.setupEventListeners();
 
+      // Verificar serviços integrados
       if (window.weatherService) {
         console.log("🌤️ Serviço de clima integrado");
+      }
+      if (window.cepService) {
+        console.log("📮 Serviço de CEP integrado");
       }
     } catch (error) {
       console.error("Erro ao inicializar app:", error);
@@ -120,6 +119,7 @@ class TransportadoraApp {
       });
     }
 
+    // Busca por Enter na cidade
     const citySearch = document.getElementById("citySearch");
     if (citySearch) {
       citySearch.addEventListener("keypress", (e) => {
@@ -129,9 +129,7 @@ class TransportadoraApp {
       });
     }
 
-    // Configurar event delegation uma vez no início
-    this.setupCardInteractions();
-
+    // Analytics para buscas
     this.setupAnalytics();
   }
 
@@ -141,21 +139,22 @@ class TransportadoraApp {
 
     if (searchBtn && citySearch) {
       searchBtn.addEventListener("click", () => {
-        this.trackSearch(citySearch.value.trim());
+        this.trackSearch(citySearch.value.trim(), "city");
       });
 
       citySearch.addEventListener("keypress", (e) => {
         if (e.key === "Enter") {
-          this.trackSearch(citySearch.value.trim());
+          this.trackSearch(citySearch.value.trim(), "city");
         }
       });
     }
   }
 
-  trackSearch(query) {
+  trackSearch(query, type) {
     if (query && window.gtag) {
       gtag("event", "search", {
         search_term: query,
+        search_type: type,
         event_category: "search",
       });
     }
@@ -176,6 +175,8 @@ class TransportadoraApp {
     }
 
     this.showLoading(true, "Buscando transportadoras...");
+
+    // Atualizar status para screen readers
     this.updateResultsStatus(`Buscando transportadoras para ${cidadeInput}`);
 
     setTimeout(() => {
@@ -183,6 +184,7 @@ class TransportadoraApp {
         this.filteredData = this.filterData(this.allData, cidadeInput);
         this.displayResults(this.filteredData, cidadeInput);
 
+        // Analytics
         if (window.gtag) {
           gtag("event", "search_results", {
             search_term: cidadeInput,
