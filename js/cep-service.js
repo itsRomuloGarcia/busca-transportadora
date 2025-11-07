@@ -12,12 +12,12 @@ class CepService {
     // Alternância entre abas
     const cityTab = document.getElementById("cityTab");
     const cepTab = document.getElementById("cepTab");
-    const citySearchTab = document.getElementById("citySearchTab");
-    const cepSearchTab = document.getElementById("cepSearchTab");
+    const deliveryTab = document.getElementById("deliveryTab");
 
-    if (cityTab && cepTab) {
+    if (cityTab && cepTab && deliveryTab) {
       cityTab.addEventListener("click", () => this.switchTab("city"));
       cepTab.addEventListener("click", () => this.switchTab("cep"));
+      deliveryTab.addEventListener("click", () => this.switchTab("delivery"));
     }
 
     // Busca por CEP
@@ -51,12 +51,16 @@ class CepService {
   switchTab(tab) {
     const cityTab = document.getElementById("cityTab");
     const cepTab = document.getElementById("cepTab");
+    const deliveryTab = document.getElementById("deliveryTab");
     const citySearchTab = document.getElementById("citySearchTab");
     const cepSearchTab = document.getElementById("cepSearchTab");
+    const deliverySearchTab = document.getElementById("deliverySearchTab");
 
     // Remover active de todas as abas
-    [cityTab, cepTab].forEach((tab) => tab?.classList.remove("active"));
-    [citySearchTab, cepSearchTab].forEach((tab) =>
+    [cityTab, cepTab, deliveryTab].forEach((tab) =>
+      tab?.classList.remove("active")
+    );
+    [citySearchTab, cepSearchTab, deliverySearchTab].forEach((tab) =>
       tab?.classList.remove("active")
     );
 
@@ -64,13 +68,21 @@ class CepService {
     if (tab === "city") {
       cityTab?.classList.add("active");
       citySearchTab?.classList.add("active");
-    } else {
+    } else if (tab === "cep") {
       cepTab?.classList.add("active");
       cepSearchTab?.classList.add("active");
 
       // Focar no input do CEP quando mudar para a aba
       setTimeout(() => {
         document.getElementById("cepSearch")?.focus();
+      }, 100);
+    } else if (tab === "delivery") {
+      deliveryTab?.classList.add("active");
+      deliverySearchTab?.classList.add("active");
+
+      // Focar no primeiro input da calculadora
+      setTimeout(() => {
+        document.getElementById("deliveryDate")?.focus();
       }, 100);
     }
 
@@ -215,6 +227,9 @@ class CepService {
     if (citySearch) {
       citySearch.value = formattedCityState;
 
+      // NOVO: Também preenche os campos da calculadora de entrega
+      this.fillDeliveryCalculator(cityState);
+
       // Mudar para a aba de cidade
       this.switchTab("city");
 
@@ -226,6 +241,30 @@ class CepService {
         }
       }, 300);
     }
+  }
+
+  // ✅ NOVO MÉTODO: Preenche a calculadora de entrega com dados do CEP
+  fillDeliveryCalculator(cityState) {
+    if (!cityState) return;
+
+    const parts = cityState.split(",").map((part) => part.trim());
+    const city = parts[0] || "";
+    const state = parts[1] || "";
+
+    const deliveryCity = document.getElementById("deliveryCity");
+    const deliveryState = document.getElementById("deliveryState");
+
+    if (deliveryCity && city) {
+      deliveryCity.value = city.toUpperCase();
+    }
+
+    if (deliveryState && state) {
+      deliveryState.value = state.toUpperCase();
+    }
+
+    console.log(
+      `📍 Dados do CEP preenchidos na calculadora: ${city}, ${state}`
+    );
   }
 
   // ✅ NOVO MÉTODO: Formata cidade para o padrão do banco de dados

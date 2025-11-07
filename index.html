@@ -128,6 +128,20 @@
                   </svg>
                   Buscar por CEP
                 </button>
+                <!-- NOVA ABA - CALCULAR ENTREGA -->
+                <button class="search-tab" data-tab="delivery" id="deliveryTab">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path
+                      d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"
+                    />
+                  </svg>
+                  Calcular Entrega
+                </button>
               </div>
 
               <!-- Conteúdo da Aba Cidade -->
@@ -274,6 +288,191 @@
                       </svg>
                       <span id="cepErrorMessage"
                         >CEP não encontrado. Verifique o número digitado.</span
+                      >
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- NOVA ABA - CALCULAR ENTREGA -->
+              <div class="search-tab-content" id="deliverySearchTab">
+                <div class="delivery-calculator">
+                  <div class="calculator-form">
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label for="deliveryDate" class="form-label">
+                          Data de Saída
+                        </label>
+                        <input
+                          type="date"
+                          id="deliveryDate"
+                          class="form-input"
+                          aria-label="Selecione a data de saída do frete"
+                        />
+                      </div>
+                    </div>
+
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label for="deliveryCity" class="form-label">
+                          Cidade Destino
+                        </label>
+                        <div class="search-input-wrapper">
+                          <svg
+                            class="search-icon"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                            aria-hidden="true"
+                          >
+                            <path
+                              d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"
+                            />
+                          </svg>
+                          <input
+                            type="text"
+                            id="deliveryCity"
+                            placeholder="Ex: SAO PAULO"
+                            autocomplete="off"
+                            aria-label="Digite o nome da cidade de destino"
+                          />
+                        </div>
+                      </div>
+                      <div class="form-group">
+                        <label for="deliveryState" class="form-label">
+                          UF
+                        </label>
+                        <select
+                          id="deliveryState"
+                          class="form-select"
+                          aria-label="Selecione o estado de destino"
+                        >
+                          <option value="">Selecione o estado</option>
+                          <option value="AC">AC</option>
+                          <option value="AL">AL</option>
+                          <option value="AP">AP</option>
+                          <option value="AM">AM</option>
+                          <option value="BA">BA</option>
+                          <option value="CE">CE</option>
+                          <option value="DF">DF</option>
+                          <option value="ES">ES</option>
+                          <option value="GO">GO</option>
+                          <option value="MA">MA</option>
+                          <option value="MT">MT</option>
+                          <option value="MS">MS</option>
+                          <option value="MG">MG</option>
+                          <option value="PA">PA</option>
+                          <option value="PB">PB</option>
+                          <option value="PR">PR</option>
+                          <option value="PE">PE</option>
+                          <option value="PI">PI</option>
+                          <option value="RJ">RJ</option>
+                          <option value="RN">RN</option>
+                          <option value="RS">RS</option>
+                          <option value="RO">RO</option>
+                          <option value="RR">RR</option>
+                          <option value="SC">SC</option>
+                          <option value="SP">SP</option>
+                          <option value="SE">SE</option>
+                          <option value="TO">TO</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div class="form-row">
+                      <div class="form-group full-width">
+                        <label for="deliveryCarrier" class="form-label">
+                          Transportadora
+                        </label>
+                        <select
+                          id="deliveryCarrier"
+                          class="form-select"
+                          aria-label="Selecione a transportadora"
+                        >
+                          <option value="">Selecione a transportadora</option>
+                          <!-- Opções serão preenchidas via JavaScript -->
+                        </select>
+                      </div>
+                    </div>
+
+                    <button
+                      id="calculateDelivery"
+                      class="btn-primary calculate-btn"
+                    >
+                      <span>Calcular Entrega</span>
+                      <div
+                        class="loading-spinner"
+                        style="display: none"
+                        aria-hidden="true"
+                      ></div>
+                    </button>
+                  </div>
+
+                  <!-- Resultado do Cálculo -->
+                  <div
+                    id="deliveryResult"
+                    class="delivery-result"
+                    style="display: none"
+                  >
+                    <div class="result-header">
+                      <h3>📦 Previsão de Entrega</h3>
+                    </div>
+                    <div class="result-content">
+                      <div class="result-item">
+                        <span class="result-label">Data de Saída:</span>
+                        <span
+                          id="resultDepartureDate"
+                          class="result-value"
+                        ></span>
+                      </div>
+                      <div class="result-item">
+                        <span class="result-label">Prazo de Transporte:</span>
+                        <span
+                          id="resultTransportDays"
+                          class="result-value"
+                        ></span>
+                      </div>
+                      <div class="result-item highlight">
+                        <span class="result-label">Previsão de Entrega:</span>
+                        <span
+                          id="resultDeliveryDate"
+                          class="result-value"
+                        ></span>
+                      </div>
+                      <div class="result-item">
+                        <span class="result-label">Transportadora:</span>
+                        <span id="resultCarrier" class="result-value"></span>
+                      </div>
+                      <div class="result-item">
+                        <span class="result-label">Destino:</span>
+                        <span
+                          id="resultDestination"
+                          class="result-value"
+                        ></span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    id="deliveryError"
+                    class="delivery-error"
+                    style="display: none"
+                  >
+                    <div class="error-content">
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                      >
+                        <path
+                          d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+                        />
+                      </svg>
+                      <span id="deliveryErrorMessage"
+                        >Não foi possível calcular a entrega. Verifique os dados
+                        informados.</span
                       >
                     </div>
                   </div>
@@ -466,6 +665,8 @@
     <script src="js/performance.js"></script>
     <script src="js/weather-service.js"></script>
     <script src="js/cep-service.js"></script>
+    <script src="js/date-calculator.js"></script>
+    <!-- NOVO ARQUIVO -->
     <script src="js/app.js"></script>
 
     <!-- Structured Data -->

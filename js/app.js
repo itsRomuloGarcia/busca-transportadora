@@ -78,6 +78,9 @@ class TransportadoraApp {
       if (window.cepService) {
         console.log("📮 Serviço de CEP integrado");
       }
+      if (window.dateCalculator) {
+        console.log("📅 Calculadora de entregas integrada");
+      }
     } catch (error) {
       console.error("Erro ao inicializar app:", error);
       this.showError("Erro ao inicializar a aplicação.");
@@ -129,8 +132,47 @@ class TransportadoraApp {
       });
     }
 
+    // NOVO: Sistema de abas
+    this.setupTabSystem();
+
     // Analytics para buscas
     this.setupAnalytics();
+  }
+
+  // NOVO MÉTODO: Configurar sistema de abas
+  setupTabSystem() {
+    const tabs = document.querySelectorAll(".search-tab");
+    const tabContents = document.querySelectorAll(".search-tab-content");
+
+    tabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        const tabName = tab.getAttribute("data-tab");
+
+        // Remove active de todas as abas
+        tabs.forEach((t) => t.classList.remove("active"));
+        tabContents.forEach((tc) => tc.classList.remove("active"));
+
+        // Ativa aba clicada
+        tab.classList.add("active");
+        const targetContent = document.getElementById(`${tabName}SearchTab`);
+        if (targetContent) {
+          targetContent.classList.add("active");
+        }
+
+        // Foca no primeiro input da aba
+        setTimeout(() => {
+          const firstInput = targetContent?.querySelector("input, select");
+          if (firstInput) {
+            firstInput.focus();
+          }
+        }, 100);
+
+        // Se for a aba de entrega, garante que os dados estão carregados
+        if (tabName === "delivery" && window.dateCalculator) {
+          window.dateCalculator.switchToDeliveryTab();
+        }
+      });
+    });
   }
 
   setupAnalytics() {
@@ -363,92 +405,92 @@ class TransportadoraApp {
     )}-${uf}-${transportadora.replace(/\s+/g, "-")}`;
 
     return `
-    <div class="transport-card compact" id="${cardId}" data-item='${JSON.stringify(
+  <div class="transport-card compact" id="${cardId}" data-item='${JSON.stringify(
       item
     )}' tabindex="0">
-      <div class="card-header-compact">
-        <div class="company-logo-compact ${logoClass}">
-          ${logoHTML}
+    <div class="card-header-compact">
+      <div class="company-logo-compact ${logoClass}">
+        ${logoHTML}
+      </div>
+      <div class="card-info-compact">
+        <!-- TRANSPORTADORA EM DESTAQUE (nome grande) -->
+        <div class="transportadora-name-compact">${transportadora}</div>
+        <div class="card-meta-compact">
+          <span class="meta-item">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+            </svg>
+            ${cidade}, ${uf}
+          </span>
+          <span class="meta-item">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4z"/>
+            </svg>
+            ${modal}
+          </span>
+          <span class="meta-item">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+            </svg>
+            ${diasUteis} dias úteis
+          </span>
         </div>
-        <div class="card-info-compact">
-          <!-- TRANSPORTADORA EM DESTAQUE (nome grande) -->
-          <div class="transportadora-name-compact">${transportadora}</div>
-          <div class="card-meta-compact">
-            <span class="meta-item">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-              </svg>
-              ${cidade}, ${uf}
-            </span>
-            <span class="meta-item">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4z"/>
-              </svg>
-              ${modal}
-            </span>
-            <span class="meta-item">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
-              </svg>
-              ${diasUteis} dias
-            </span>
+      </div>
+      <div class="expand-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/>
+        </svg>
+      </div>
+    </div>
+    
+    <div class="card-expanded-content">
+      <div class="expanded-section">
+        <div class="section-title">Informações da Entrega</div>
+        <div class="details-grid">
+          <div class="detail-row">
+            <span class="detail-label">Transportadora:</span>
+            <span class="detail-value">${transportadora}</span>
           </div>
-        </div>
-        <div class="expand-icon">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/>
-          </svg>
+          <div class="detail-row">
+            <span class="detail-label">Cidade/UF:</span>
+            <span class="detail-value">${cidade}, ${uf}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Modal:</span>
+            <span class="modal-badge">${modal}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Prazo de entrega:</span>
+            <span class="prazo-badge">${diasUteis} dias úteis</span>
+          </div>
         </div>
       </div>
       
-      <div class="card-expanded-content">
-        <div class="expanded-section">
-          <div class="section-title">Informações da Entrega</div>
-          <div class="details-grid">
-            <div class="detail-row">
-              <span class="detail-label">Transportadora:</span>
-              <span class="detail-value">${transportadora}</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Cidade/UF:</span>
-              <span class="detail-value">${cidade}, ${uf}</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Modal:</span>
-              <span class="modal-badge">${modal}</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Prazo de entrega:</span>
-              <span class="prazo-badge">${diasUteis} dias úteis</span>
-            </div>
+      <div class="expanded-section">
+        <div class="section-title">Distância e Localização</div>
+        <div class="details-grid">
+          <div class="detail-row">
+            <span class="detail-label">Distância de Balneário Camboriú, SC:</span>
+            <span class="detail-value">
+              <div class="distance-loading" id="distance-${cardId}">
+                <div class="mini-spinner"></div>
+                Calculando distância...
+              </div>
+            </span>
           </div>
-        </div>
-        
-        <div class="expanded-section">
-          <div class="section-title">Distância e Localização</div>
-          <div class="details-grid">
-            <div class="detail-row">
-              <span class="detail-label">Distância de Balneário Camboriú, SC:</span>
-              <span class="detail-value">
-                <div class="distance-loading" id="distance-${cardId}">
-                  <div class="mini-spinner"></div>
-                  Calculando distância...
-                </div>
-              </span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Origem:</span>
-              <span class="detail-value">Balneário Camboriú, SC</span>
-            </div>
-            <div class="detail-row">
-              <span class="detail-label">Destino:</span>
-              <span class="detail-value">${cidade}, ${uf}</span>
-            </div>
+          <div class="detail-row">
+            <span class="detail-label">Origem:</span>
+            <span class="detail-value">Balneário Camboriú, SC</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Destino:</span>
+            <span class="detail-value">${cidade}, ${uf}</span>
           </div>
         </div>
       </div>
     </div>
-  `;
+  </div>
+`;
   }
 
   // ✅ EVENT DELEGATION - CONFIGURADO UMA VEZ NO INÍCIO
